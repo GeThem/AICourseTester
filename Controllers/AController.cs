@@ -105,7 +105,6 @@ namespace AICourseTester.Controllers
             return solution;
         }
 
-        // PUT api/<ValuesController>/5
         [Authorize(Roles = "Administrator"), HttpPut("FifteenPuzzle/Users/{userId}/{depth?}/{dimensions?}/{generate?}")]
         public async Task<ActionResult> UpdateFPTest(string userId, int? depth = null, int? dimensions = null, bool generate = false)
         {
