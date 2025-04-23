@@ -25,9 +25,14 @@ namespace AICourseTester.Models
         public ANode(int dimensions)
         {
             State = new int[dimensions][];
+            int k = 0;
             for (int i = 0; i < dimensions; i++)
             {
                 State[i] = new int[dimensions];
+                for (int j = 0; j < dimensions; j++)
+                {
+                    State[i][j] = k++;
+                }
             }
         }
 

@@ -5,8 +5,11 @@ using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.VisualBasic;
 using Mono.TextTemplating;
+using System.Collections;
 using System.Drawing.Printing;
+using System.Numerics;
 using System.Security.Cryptography;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AICourseTester.Services
 {
@@ -32,8 +35,6 @@ namespace AICourseTester.Services
         {
             if (node.State == null) return;
             var (x, y) = (-1, -1);
-            (int x, int y)[] directions = [(-1, 0), (0, -1), (1, 0), (0, 1)];
-
             for (int i = 0; i < node.State.Length; i++) {
                 for (int j = 0; j < node.State[0].Length; j++)
                 {
@@ -49,24 +50,30 @@ namespace AICourseTester.Services
                 }
             }
 
-            int lastMoveIdx = -1;
+            (int, int) lastMove = (1, 0);
             for (int i = 0; i < moves; i++)
             {
-                int moveIdx = RandomNumberGenerator.GetInt32(4);
-                if (moveIdx == lastMoveIdx)
+                (int, int)[] directions = [(-1, 0), (0, -1), (1, 0), (0, 1)];
+                int lastMoveIdx = Array.IndexOf(directions, lastMove);
+                directions = directions.Where(val => val != directions[(lastMoveIdx + 2) % 4]).ToArray();
+                int moveIdx;
+                (int x, int y) move;
+                int nX, nY;
+                while (true)
                 {
-                    moveIdx = (moveIdx + 1) % 4;
-                }
-                var move = directions[moveIdx];
-                var (nX, nY) = (x + move.x, y + move.y);
-                if (nX < 0 || nY < 0 || nX > node.State.Length - 1 || nY  > node.State[0].Length - 1)
-                {
-                    moveIdx = (moveIdx + 2) % 4;
+                    moveIdx = RandomNumberGenerator.GetInt32(directions.Length);
                     move = directions[moveIdx];
+                    (nX, nY) = (x + move.x, y + move.y);
+                    if (nX < 0 || nY < 0 || nX >= node.State.Length || nY >= node.State[0].Length)
+                    {
+                        directions = directions.Where(val => val != move).ToArray();
+                        continue;
+                    }
+                    lastMove = move;
+                    break;
                 }
-                lastMoveIdx = moveIdx;
-                (node.State[y][x], node.State[move.y][move.x]) = (node.State[move.y][move.x], node.State[y][x]);
-
+                (node.State[y][x], node.State[nY][nX]) = (node.State[nY][nX], node.State[y][x]);
+                (x, y) = (nX, nY);
             }
         }
 

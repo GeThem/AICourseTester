@@ -12,6 +12,7 @@ using System.Security.Cryptography;
 using System.Xml.Linq;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.IdentityModel.Tokens;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -30,16 +31,17 @@ namespace AICourseTester.Controllers
             _context = context;
         }
 
-        [HttpGet("FifteenPuzzle/Train/{depth}/{dimensions}")]
-        public List<ANode> GetFPTrain(int depth, int dimensions)
+        [HttpGet("FifteenPuzzle/Train")]
+        public List<ANode> GetFPTrain([System.Web.Http.FromUri] int depth = 3, [System.Web.Http.FromUri] int dimensions = 4)
         {
             ANode aNode = new ANode(dimensions);
+            FifteenPuzzleService.ShuffleState(aNode);
             var (_, list) = FifteenPuzzleService.GenerateTree(aNode, depth);
             return list;
         }
 
-        [HttpPost("FifteenPuzzle/Train/{heuristic}")]
-        public ActionResult<List<ANode>> PostFPTrainVerify(List<ANode> list, int heuristic)
+        [HttpPost("FifteenPuzzle/Train")]
+        public ActionResult<List<ANode>> PostFPTrainVerify(List<ANode> list, [System.Web.Http.FromUri] int heuristic = 1)
         {
             if (heuristic != 1 && heuristic != 2)
             {
@@ -61,6 +63,7 @@ namespace AICourseTester.Controllers
             if (fp.Problem == null)
             {
                 ANode aNode = new ANode(fp.Dimensions);
+                FifteenPuzzleService.ShuffleState(aNode);
                 var (tree, list) = FifteenPuzzleService.GenerateTree(aNode, fp.TreeDepth);
                 fp.Problem = list.ToJson();
                 
@@ -105,9 +108,22 @@ namespace AICourseTester.Controllers
             return solution;
         }
 
-        // PUT api/<ValuesController>/5
-        [Authorize(Roles = "Administrator"), HttpPut("FifteenPuzzle/Users/{userId}/{depth?}/{dimensions?}/{generate?}")]
-        public async Task<ActionResult> UpdateFPTest(string userId, int? depth = null, int? dimensions = null, bool generate = false)
+        [Authorize(Roles = "Administrator"), HttpGet("FifteenPuzzle/Users/")]
+        public ActionResult<FifteenPuzzle[]?> GetUsers()
+        {
+            var fp = _context.Fifteens.Where(f => f.User.Email != "admin@admin.com").ToArray();
+            return fp;
+        }
+
+        [Authorize(Roles = "Administrator"), HttpGet("FifteenPuzzle/Users/{userId}/")]
+        public ActionResult<FifteenPuzzle[]?> GetUser(string userId)
+        {
+            var fp = _context.Fifteens.Where(f => f.UserId == userId).ToArray();
+            return fp;
+        }
+
+        [Authorize(Roles = "Administrator"), HttpPut("FifteenPuzzle/Users/{userId}/")]
+        public async Task<ActionResult> UpdateFPTest(string userId, [System.Web.Http.FromUri] int? depth = null, [System.Web.Http.FromUri] int? dimensions = null, [System.Web.Http.FromUri] bool generate = false)
         {
             var fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == userId);
             if (fp == null)
@@ -127,6 +143,7 @@ namespace AICourseTester.Controllers
             if (generate == true)
             {
                 ANode aNode = new ANode(fp.Dimensions);
+                FifteenPuzzleService.ShuffleState(aNode);
                 var (tree, list) = FifteenPuzzleService.GenerateTree(aNode, fp.TreeDepth);
                 fp.Problem = list.ToJson();
 

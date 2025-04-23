@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Writers;
+using System.ComponentModel.DataAnnotations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,13 +58,21 @@ using (var scope = app.Services.CreateScope())
     }
 
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var userStore = scope.ServiceProvider.GetRequiredService<IUserStore<ApplicationUser>>();
+    var emailStore = (IUserEmailStore<ApplicationUser>)userStore;
     string email = "admin@admin.com";
+
     if (await userManager.FindByEmailAsync(email) == null)
     {
-        var user = new ApplicationUser() { UserName = "admin", Email = email, EmailConfirmed = true };
+        var user = new ApplicationUser();
+        await userStore.SetUserNameAsync(user, email, CancellationToken.None);
+        await emailStore.SetEmailAsync(user, email, CancellationToken.None);
+
         await userManager.CreateAsync(user, "Abc123-");
         await userManager.AddToRoleAsync(user, "Administrator");
-    } 
+    }
+
+
 }
 
 app.Run();
