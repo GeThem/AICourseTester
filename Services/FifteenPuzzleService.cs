@@ -334,7 +334,7 @@ namespace AICourseTester.Services
 
         public static int Heuristic2(ANode node)
         {
-            var score = 0;                                     // суммарное расстояние до цели
+            var score = 0;
             for (int i = 0; i < node.State.Length; i++)
             {
                 for (int j = 0; j < node.State[0].Length; j++)
