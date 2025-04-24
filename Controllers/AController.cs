@@ -103,8 +103,9 @@ namespace AICourseTester.Controllers
                 fp.Solution = solution.ToJson();
                 
                 _context.Fifteens.Update(fp);
-                await _context.SaveChangesAsync();
             }
+            fp.IsSolved = true;
+            await _context.SaveChangesAsync();
             return solution;
         }
 
@@ -140,6 +141,7 @@ namespace AICourseTester.Controllers
             }
             fp.Problem = null;
             fp.Solution = null;
+            fp.IsSolved = false;
             if (generate == true)
             {
                 ANode aNode = new ANode(fp.Dimensions);
@@ -165,6 +167,7 @@ namespace AICourseTester.Controllers
             if (fp == null) { return; }
             fp.Problem = null;
             fp.Solution = null;
+            fp.IsSolved = false;
             _context.Fifteens.Update(fp);
             _context.SaveChanges();
         }

@@ -5,7 +5,7 @@ using System.Xml.Linq;
 
 namespace AICourseTester.Models
 {
-    public class ANode : Node<ANode>, IEquatable<ANode>
+    public class ANode : Node<ANode>
     {
         [JsonIgnore]
         public int depth = 0;

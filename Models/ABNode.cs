@@ -26,6 +26,15 @@ namespace AICourseTester.Models
             return newNode;
         }
 
+        public bool Equals(ABNode? other)
+        {
+            if (other == null) return false;
+            if (Id != other.Id || depth != other.depth) return false;
+            if (prv != other.prv) return false;
+            if (A != other.A || B != other.B) return false;
+            return true;
+        }
+
         public void Reset()
         {
             A = int.MinValue;

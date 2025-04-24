@@ -5,9 +5,55 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AICourseTester.Models
 {
-    public class ProblemTree<T> : ICloneable where T : Node<T>
+    public class ProblemTree<T> : ICloneable, IEquatable<ProblemTree<T>> where T : Node<T>
     {
         public T? Head { get; set; }
+
+        public bool Equals(ProblemTree<T>? other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+            if (other.Head == null && Head == null)
+            {
+                return true;
+            }
+            if (other.Head == null || Head == null)
+            {
+                return false;
+            }
+            return _equalsNode(Head, other.Head);
+        }
+
+        private bool _equalsNode(T node, T other)
+        {
+            if (node.SubNodes != null && other.SubNodes == null)
+            {
+                return false;
+            }
+            if (node.SubNodes == null && other.SubNodes != null)
+            {
+                return false;
+            }
+            if (node.SubNodes == null)
+            {
+                return node.Equals(other);
+            }
+            if (node.SubNodes.Count != other.SubNodes.Count)
+            {
+                return false;
+            }
+            bool result = true;
+            foreach (var (subNode, subNodeOther) in node.SubNodes.Zip(other.SubNodes))
+            {
+                if (_equalsNode(subNode, subNodeOther) == false)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
 
         public object Clone()
         {
@@ -38,7 +84,7 @@ namespace AICourseTester.Models
         }
     }
 
-    public interface Node<T> : ICloneable where T : Node<T>
+    public interface Node<T> : ICloneable, IEquatable<T> where T : Node<T>
     {
         public T? prv { get; set; }
         public List<T>? SubNodes { get; set; }
