@@ -1,16 +1,47 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AICourseTester.Models
 {
-    public class ProblemTree<T> where T : Node
+    public class ProblemTree<T> : ICloneable where T : Node<T>
     {
         public T? Head { get; set; }
+
+        public object Clone()
+        {
+            ProblemTree<T> newTree = new ProblemTree<T>();
+            if (Head == null)
+            {
+                return newTree;
+            }
+            newTree.Head = _cloneNode(Head);
+            return newTree;
+        }
+
+        private T _cloneNode(T node)
+        {
+            T newNode = (T)node.Clone();
+            newNode.prv = node;
+            if (node.SubNodes  == null)
+            {
+                return newNode;
+            }
+            List<T> newSubNodes = new();
+            foreach (var subNode in node.SubNodes)
+            {
+                newSubNodes.Add(_cloneNode(subNode));
+            }
+            newNode.SubNodes = newSubNodes;
+            return newNode;
+        }
     }
 
-    public interface Node
+    public interface Node<T> : ICloneable where T : Node<T>
     {
-        public List<int> SubNodesIds { get; set; }
+        public T? prv { get; set; }
+        public List<T>? SubNodes { get; set; }
+        public void Reset();
     }
 }

@@ -26,11 +26,6 @@ namespace AICourseTester.Services
             return newList;
         }
 
-        public static void ResetNode(ANode node)
-        {
-            node.G = node.F = node.H = -1;
-        }
-
         public static void ShuffleState(ANode node, int moves = 30)
         {
             if (node.State == null) return;
@@ -261,25 +256,6 @@ namespace AICourseTester.Services
             return;
         }
 
-        public static void PrepareTree(ProblemTree<ANode> tree)
-        {
-            _setPointer(tree.Head, null);
-        }
-
-        private static void _setPointer(ANode curr, ANode? prev)
-        {
-            if (curr.SubNodes == null)
-            {
-                return;
-            }
-            curr.prv = prev;
-            curr.Parents.Add(prev.Id);
-            foreach (var subNode in curr.SubNodes)
-            {
-                _setPointer(subNode, curr);
-            }
-        }
-
         public static (ProblemTree<ANode>, List<ANode>) GenerateTree(ANode startState, int height)
         {
             ProblemTree<ANode> tree = new ProblemTree<ANode>();
@@ -302,10 +278,6 @@ namespace AICourseTester.Services
                 return id;
             }
             GenerateNextStates(node, ignore);
-            if (node.SubNodes == null)
-            {
-                return id;
-            }
             if (node.SubNodesIds == null)
             {
                 node.SubNodesIds = new();

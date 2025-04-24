@@ -1,15 +1,16 @@
 ﻿using Microsoft.CodeAnalysis;
 using Newtonsoft.Json;
 using System.Runtime.Serialization;
+using System.Xml.Linq;
 
 namespace AICourseTester.Models
 {
-    public class ANode : Node, ICloneable, IEquatable<ANode>
+    public class ANode : Node<ANode>, IEquatable<ANode>
     {
         [JsonIgnore]
         public int depth = 0;
         [JsonIgnore]
-        public ANode? prv = null;
+        public ANode? prv { get; set; } = null;
         public List<int> Parents { get; set; } = new();
         public int Id { get; set; }
         public int[][]? State { get; set; }
@@ -17,7 +18,7 @@ namespace AICourseTester.Models
         public int H { get; set; } = -1;
         public int F { get; set; } = -1;
         [JsonIgnore]
-        public List<ANode>? SubNodes = null;
+        public List<ANode>? SubNodes { get; set; } = null;
         public List<int> SubNodesIds { get; set; } = new();
 
         public ANode() { }
@@ -70,6 +71,11 @@ namespace AICourseTester.Models
                 }
             }
             return true;
+        }
+
+        public void Reset()
+        {
+            G = F = H = -1;
         }
     }
 }
