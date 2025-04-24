@@ -18,6 +18,7 @@ namespace AICourseTester.Data
         public MainDbContext(DbContextOptions<MainDbContext> options) : base(options) { }
 
         public DbSet<FifteenPuzzle> Fifteens { get; set; } = null!;
+        public DbSet<AlphaBeta> AlphaBeta { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
