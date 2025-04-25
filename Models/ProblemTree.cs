@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -8,6 +10,36 @@ namespace AICourseTester.Models
     public class ProblemTree<T> : ICloneable, IEquatable<ProblemTree<T>> where T : Node<T>
     {
         public T? Head { get; set; }
+
+        public IEnumerable<T?> GetNodes()
+        {
+            if (Head == null)
+            {
+                yield return default(T);
+                yield break;
+            }
+            foreach (var node in yieldNode(Head))
+            {
+                yield return node;
+            }
+        }
+
+        private IEnumerable<T> yieldNode(T node)
+        {
+            if (node.SubNodes == null)
+            {
+                yield return node;
+                yield break;
+            }
+            foreach (var subNode in node.SubNodes)
+            {
+                foreach (var item in yieldNode(subNode))
+                {
+                    yield return item;
+                }
+            }
+            yield return node;
+        }
 
         public bool Equals(ProblemTree<T>? other)
         {
@@ -23,31 +55,22 @@ namespace AICourseTester.Models
             {
                 return false;
             }
-            return _equalsNode(Head, other.Head);
-        }
-
-        private bool _equalsNode(T node, T other)
-        {
-            if (node.SubNodes != null && other.SubNodes == null)
+            var (arr1, arr2) = (GetNodes().ToList(), other.GetNodes().ToList());
+            if (arr1.Count != arr2.Count) 
             {
-                return false;
+                return false; 
             }
-            if (node.SubNodes == null && other.SubNodes != null)
+            foreach (var (node1, node2) in arr1.Zip(arr2))
             {
-                return false;
-            }
-            if (node.SubNodes == null)
-            {
-                return node.Equals(other);
-            }
-            if (node.SubNodes.Count != other.SubNodes.Count)
-            {
-                return false;
-            }
-            bool result = true;
-            foreach (var (subNode, subNodeOther) in node.SubNodes.Zip(other.SubNodes))
-            {
-                if (_equalsNode(subNode, subNodeOther) == false)
+                if (node1 == null && node2 == null)
+                {
+                    continue;
+                }
+                if (node1 == null || node2 == null)
+                {
+                    return false;
+                }
+                if (!node1.Equals(node2))
                 {
                     return false;
                 }
@@ -69,7 +92,6 @@ namespace AICourseTester.Models
         private T _cloneNode(T node)
         {
             T newNode = (T)node.Clone();
-            newNode.prv = node;
             if (node.SubNodes  == null)
             {
                 return newNode;
@@ -86,7 +108,6 @@ namespace AICourseTester.Models
 
     public interface Node<T> : ICloneable, IEquatable<T> where T : Node<T>
     {
-        public T? prv { get; set; }
         public List<T>? SubNodes { get; set; }
         public void Reset();
     }
