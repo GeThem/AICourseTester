@@ -17,15 +17,6 @@ namespace AICourseTester.Services
     {
         public static readonly Func<ANode, int>[] Heuristics = [Heuristic1, Heuristic2];
 
-        public static List<ANode> GenerateSolution(List<ANode> list, int heuristic)
-        {
-            var newList = new List<ANode>();
-            list.ForEach(node => newList.Add((ANode)node.Clone()));
-            var newTree = FifteenPuzzleService.ListToTree(newList);
-            FifteenPuzzleService.Search(newTree, FifteenPuzzleService.Heuristics[heuristic]);
-            return newList;
-        }
-
         public static void ShuffleState(ANode node, int moves = 30)
         {
             if (node.State == null) return;
@@ -71,6 +62,28 @@ namespace AICourseTester.Services
                 (x, y) = (nX, nY);
             }
         }
+        public static void PrepareTree(ProblemTree<ANode> tree)
+        {
+            tree.Head.depth = 0;
+            _prepareNode(tree.Head, null);
+        }
+
+        private static void _prepareNode(ANode curr, ANode? prev)
+        {
+            if (curr.SubNodes == null)
+            {
+                return;
+            }
+            curr.prv = prev;
+            if (prev != null)
+            {
+                curr.depth = prev.depth + 1;
+            }
+            foreach (var subNode in curr.SubNodes)
+            {
+                _prepareNode(subNode, curr);
+            }
+        }
 
         public static ProblemTree<ANode> ListToTree(List<ANode> nodes)
         {
@@ -96,6 +109,7 @@ namespace AICourseTester.Services
                     }
                 }
             }
+            PrepareTree(tree);
             return tree;
         }
 
@@ -191,7 +205,7 @@ namespace AICourseTester.Services
             return null;
         }
 
-        public static void Search(ProblemTree<ANode> tree, Func<ANode, int> h)
+        public static List<ANodeModel> Search(ProblemTree<ANode> tree, Func<ANode, int> h)
         {
             OrderedSet<ANode> openNodes = new(state => state.F)
             {
@@ -207,12 +221,13 @@ namespace AICourseTester.Services
                 var curr = openNodes.Pop();
                 if (curr.F - curr.G == 0)
                 {
-                    return;
+                    closedNodes.Add(curr);
+                    return closedNodes.Select(n => new ANodeModel(n)).ToList();
                 }
                 closedNodes.Add(curr);
                 if (curr.SubNodes == null)
                 {
-                    return;
+                    return closedNodes.Select(n => new ANodeModel(n)).ToList();
                 }
                 foreach (var state in curr.SubNodes)
                 {
@@ -253,7 +268,7 @@ namespace AICourseTester.Services
                     openNodes.Add(state);
                 }
             }
-            return;
+            return closedNodes.Select(n => new ANodeModel(n)).ToList();
         }
 
         public static (ProblemTree<ANode>, List<ANode>) GenerateTree(ANode startState, int height)

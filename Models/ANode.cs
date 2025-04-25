@@ -1,6 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
-using Newtonsoft.Json;
 using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 using System.Xml.Linq;
 
 namespace AICourseTester.Models
@@ -8,8 +8,10 @@ namespace AICourseTester.Models
     public class ANode : Node<ANode>
     {
         [JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
         public int depth = 0;
         [JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
         public ANode? prv { get; set; } = null;
         public List<int> Parents { get; set; } = new();
         public int Id { get; set; }
@@ -59,9 +61,9 @@ namespace AICourseTester.Models
         {
             if (other == null) return false;
             if (Id != other.Id || depth != other.depth) return false;
-            if (!Parents.SequenceEqual(other.Parents)) return false;
-            if (State == null && other.State == State) return true;
-            if (State == null || other.State == null) return false; 
+            if (!Parents.All(other.Parents.Contains)) return false;
+            if (State == null && other.State == null) return true;
+            if (State == null || other.State == null) return false;
             if (State.Length != other.State.Length || State[0].Length != other.State[0].Length) return false;
             for (int i = 0; i < State.Length; i++)
             {
@@ -76,6 +78,23 @@ namespace AICourseTester.Models
         public void Reset()
         {
             G = F = H = -1;
+        }
+    }
+
+    public class ANodeModel
+    {
+        public int Id { get; set; }
+        public int G { get; set; } = -1;
+        public int H { get; set; } = -1;
+        public int F { get; set; } = -1;
+
+        public ANodeModel() { }
+        public ANodeModel(ANode node)
+        {
+            Id = node.Id;
+            G = node.G;
+            H = node.H;
+            F = node.F;
         }
     }
 }
