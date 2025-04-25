@@ -13,6 +13,7 @@ using System.Xml.Linq;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.CodeAnalysis;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -41,72 +42,75 @@ namespace AICourseTester.Controllers
         }
 
         [HttpPost("FifteenPuzzle/Train")]
-        public ActionResult<List<ANode>> PostFPTrainVerify(List<ANode> list, [System.Web.Http.FromUri] int heuristic = 1)
+        public ActionResult<List<ANodeModel>> PostFPTrainVerify(List<ANode> list, [System.Web.Http.FromUri] int heuristic = 1)
         {
             if (heuristic != 1 && heuristic != 2)
             {
                 return BadRequest();
             }
             var tree = FifteenPuzzleService.ListToTree(list);
-            FifteenPuzzleService.Search(tree, FifteenPuzzleService.Heuristics[heuristic]);
-            return list;
+            var solution = FifteenPuzzleService.Search(tree, FifteenPuzzleService.Heuristics[heuristic]);
+            return solution;
         }
 
         [Authorize, HttpGet("FifteenPuzzle/Test")]
-        public async Task<ActionResult<List<ANode>>> GetFPTest()
+        public async Task<ActionResult<FifteenPuzzleResponse>> GetFPTest()
         {
             var fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == _userManager.GetUserId(User));
             if (fp == null)
             {
-                return NotFound();
+                _context.Fifteens.Add(new FifteenPuzzle() { UserId = _userManager.GetUserId(User) });
+                _context.SaveChanges();
+                fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == _userManager.GetUserId(User));
+            }
+            if (fp.IsSolved)
+            {
+                var (_, problem) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeDepth);
+                var solution = fp.Solution.FromJson<List<ANodeModel>>();
+                var userSolution = fp.UserSolution.FromJson<List<ANodeModel>>();
+                return new FifteenPuzzleResponse() { Problem = problem, Solution = solution, UserSolution = userSolution };
             }
             if (fp.Problem == null)
             {
                 ANode aNode = new ANode(fp.Dimensions);
                 FifteenPuzzleService.ShuffleState(aNode);
-                var (tree, list) = FifteenPuzzleService.GenerateTree(aNode, fp.TreeDepth);
-                fp.Problem = list.ToJson();
-                
-                if (fp.Heuristic == null)
-                {
-                    fp.Heuristic = RandomNumberGenerator.GetInt32(2) + 1;
-                }
-                fp.Solution = FifteenPuzzleService.GenerateSolution(list, (int)fp.Heuristic - 1).ToJson();
-                
+                var (_, listInner) = FifteenPuzzleService.GenerateTree(aNode, fp.TreeDepth);
+
+                fp.Problem = aNode.State.ToJson();
                 _context.Fifteens.Update(fp);
                 await _context.SaveChangesAsync();
-                return list;
+                return new FifteenPuzzleResponse() { Problem = listInner };
             }
-            return fp.Problem.FromJson<List<ANode>>();
+            var (_, list) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeDepth);
+            return new FifteenPuzzleResponse() { Problem = list };
         }
 
         [Authorize, HttpPost("FifteenPuzzle/Test")]
-        public async Task<ActionResult<List<ANode>>> PostFPTestVerify(List<ANode> list)
+        public async Task<ActionResult<FifteenPuzzleResponse>> PostFPTestVerify(List<ANodeModel> userSolution)
         {
             var fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == _userManager.GetUserId(User));
             if (fp == null)
             {
                 return NotFound();
             }
-            var (problem, solution) = (fp.Problem.FromJson<List<ANode>>(), fp.Solution.FromJson<List<ANode>>());
-            if (!problem.All(list.Contains))
+            if (fp.IsSolved)
             {
-                return BadRequest();
+                return new FifteenPuzzleResponse() { Solution = fp.Solution.FromJson<List<ANodeModel>>() };
             }
-            if (solution == null)
+            var (problemTree, problem) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeDepth); 
+
+            fp.UserSolution = userSolution.ToJson();
+            if (fp.Heuristic == null)
             {
-                if (fp.Heuristic == null)
-                {
-                    fp.Heuristic = RandomNumberGenerator.GetInt32(2) + 1;
-                }
-                solution = FifteenPuzzleService.GenerateSolution(list, (int)fp.Heuristic - 1);
-                fp.Solution = solution.ToJson();
-                
-                _context.Fifteens.Update(fp);
+                fp.Heuristic = RandomNumberGenerator.GetInt32(2) + 1;
             }
+            var solution = FifteenPuzzleService.Search(problemTree, FifteenPuzzleService.Heuristics[(int)fp.Heuristic - 1]);
+            fp.Solution = solution.ToJson();
             fp.IsSolved = true;
+
+            _context.Fifteens.Update(fp);
             await _context.SaveChangesAsync();
-            return solution;
+            return new FifteenPuzzleResponse() { Solution = solution };
         }
 
         [Authorize(Roles = "Administrator"), HttpGet("FifteenPuzzle/Users/")]
@@ -117,19 +121,25 @@ namespace AICourseTester.Controllers
         }
 
         [Authorize(Roles = "Administrator"), HttpGet("FifteenPuzzle/Users/{userId}/")]
-        public ActionResult<FifteenPuzzle[]?> GetUser(string userId)
+        public ActionResult<FifteenPuzzle?> GetUser(string userId)
         {
-            var fp = _context.Fifteens.Where(f => f.UserId == userId).ToArray();
+            var fp = _context.Fifteens.Where(f => f.UserId == userId).FirstOrDefault();
+            if (fp != null)
+            {
+                var (tree, list) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeDepth);
+            }
             return fp;
         }
 
         [Authorize(Roles = "Administrator"), HttpPut("FifteenPuzzle/Users/{userId}/")]
-        public async Task<ActionResult> UpdateFPTest(string userId, [System.Web.Http.FromUri] int? depth = null, [System.Web.Http.FromUri] int? dimensions = null, [System.Web.Http.FromUri] bool generate = false)
+        public async Task<ActionResult> UpdateFPTest(int[][]? State, string userId, [System.Web.Http.FromUri] int? depth = null, [System.Web.Http.FromUri] int? dimensions = null, [System.Web.Http.FromUri] bool generate = false)
         {
             var fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == userId);
-            if (fp == null)
+            if (fp == null && _context.Users.FirstOrDefault(f => f.Id == userId) != null)
             {
-                return NotFound();
+                _context.Fifteens.Add(new FifteenPuzzle() { UserId = userId });
+                _context.SaveChanges();
+                fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == userId);
             }
             if (depth != null)
             {
@@ -142,18 +152,16 @@ namespace AICourseTester.Controllers
             fp.Problem = null;
             fp.Solution = null;
             fp.IsSolved = false;
-            if (generate == true)
+            if (State != null)
+            {
+                fp.Problem = State.ToJson();
+                fp.Dimensions = State.Length;
+            }
+            else if (generate == true)
             {
                 ANode aNode = new ANode(fp.Dimensions);
                 FifteenPuzzleService.ShuffleState(aNode);
-                var (tree, list) = FifteenPuzzleService.GenerateTree(aNode, fp.TreeDepth);
-                fp.Problem = list.ToJson();
-
-                if (fp.Heuristic == null)
-                {
-                    fp.Heuristic = RandomNumberGenerator.GetInt32(2) + 1;
-                }
-                fp.Solution = FifteenPuzzleService.GenerateSolution(list, (int)fp.Heuristic - 1).ToJson();
+                fp.Problem = aNode.State.ToJson();
             }
             _context.Fifteens.Update(fp);
             await _context.SaveChangesAsync();
