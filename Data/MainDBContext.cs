@@ -32,8 +32,15 @@ namespace AICourseTester.Data
                 .Property(fp => fp.TreeDepth)
                 .HasDefaultValue(3);
 
-
             modelBuilder.Entity<FifteenPuzzle>()
+                .Property(fp => fp.IsSolved)
+                .HasDefaultValue(true);
+
+            modelBuilder.Entity<AlphaBeta>()
+                .Property(fp => fp.TreeDepth)
+                .HasDefaultValue(3);
+
+            modelBuilder.Entity<AlphaBeta>()
                 .Property(fp => fp.IsSolved)
                 .HasDefaultValue(true);
         }
