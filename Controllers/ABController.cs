@@ -34,8 +34,7 @@ namespace AICourseTester.Controllers
         [HttpGet("Train")]
         public ProblemTree<ABNode> GetABTrain([System.Web.Http.FromUri] int depth = 3)
         {
-            ABNode aNode = new ABNode();
-            var tree = AlphaBetaService.GenerateTree(aNode, depth);
+            var tree = AlphaBetaService.GenerateTree(depth);
             return tree;
         }
 
@@ -63,58 +62,62 @@ namespace AICourseTester.Controllers
         //}
 
         [HttpPost("Train")]
-        public ActionResult<ProblemTree<ABNode>> PostABTrainVerify(ProblemTree<ABNode> tree)
+        public ActionResult<List<ABNodeModel>> PostABTrainVerify(ProblemTree<ABNode> tree)
         {
-            AlphaBetaService.Search(tree);
-            return tree;
+            var solution = AlphaBetaService.Search(tree);
+            return solution;
         }
 
         [Authorize, HttpGet("Test")]
-        public async Task<ActionResult<ProblemTree<ABNode>>> GetABTest()
+        public async Task<ActionResult<AlphaBetaResponse>> GetABTest()
         {
             var fp = await _context.AlphaBeta.FirstOrDefaultAsync(f => f.UserId == _userManager.GetUserId(User));
             if (fp == null)
             {
-                return NotFound();
+                _context.AlphaBeta.Add(new AlphaBeta() { UserId = _userManager.GetUserId(User) });
+                _context.SaveChanges();
+                fp = await _context.AlphaBeta.FirstOrDefaultAsync(f => f.UserId == _userManager.GetUserId(User));
+            }
+            if (fp.IsSolved)
+            {
+                var problem = fp.Problem.FromJson<ProblemTree<ABNode>>();
+                var solution = fp.Solution.FromJson<List<ABNodeModel>>();
+                var userSolution = fp.UserSolution.FromJson<List<ABNodeModel>>();
+                return new AlphaBetaResponse() { Problem = problem, Solution = solution, UserSolution = userSolution };
             }
             if (fp.Problem == null)
             {
-                ABNode aNode = new ABNode();
-                var tree = AlphaBetaService.GenerateTree(aNode, fp.TreeDepth);
-                fp.Problem = tree.ToJson();
+                var problemInner = AlphaBetaService.GenerateTree(fp.TreeHeight);
 
-                fp.Solution = AlphaBetaService.GenerateSolution(tree).ToJson();
-
+                fp.Problem = problemInner.ToJson();
                 _context.AlphaBeta.Update(fp);
                 await _context.SaveChangesAsync();
-                return tree;
+                return new AlphaBetaResponse() { Problem = problemInner };
             }
-            return fp.Problem.FromJson<ProblemTree<ABNode>>();
+            return new AlphaBetaResponse() { Problem = fp.Problem.FromJson<ProblemTree<ABNode>>() };
         }
 
         [Authorize, HttpPost("Test")]
-        public async Task<ActionResult<ProblemTree<ABNode>>> PostABTestVerify(ProblemTree<ABNode> tree)
+        public async Task<ActionResult<AlphaBetaResponse>> PostABTestVerify(List<ABNodeModel> userSolution)
         {
             var fp = await _context.AlphaBeta.FirstOrDefaultAsync(f => f.UserId == _userManager.GetUserId(User));
             if (fp == null)
             {
                 return NotFound();
             }
-            var (problem, solution) = (fp.Problem.FromJson<ProblemTree<ABNode>>(), fp.Solution.FromJson<ProblemTree<ABNode>>());
-            if (problem != tree)
+            if (fp.IsSolved)
             {
-                return BadRequest();
+                return new AlphaBetaResponse() { Solution = fp.Solution.FromJson<List<ABNodeModel>>() };
             }
-            if (solution == null)
-            {
-                solution = AlphaBetaService.GenerateSolution(tree);
-                fp.Solution = solution.ToJson();
-
-            }
+            fp.UserSolution = userSolution.ToJson();
+            var problem = fp.Problem.FromJson<ProblemTree<ABNode>>();
+            var solution = AlphaBetaService.Search(problem);
+            fp.Solution = solution.ToJson();
             fp.IsSolved = true;
+
             _context.AlphaBeta.Update(fp);
             await _context.SaveChangesAsync();
-            return solution;
+            return new AlphaBetaResponse() { Problem = problem, Solution = solution };
         }
 
         [Authorize(Roles = "Administrator"), HttpGet("Users/")]
@@ -125,34 +128,44 @@ namespace AICourseTester.Controllers
         }
 
         [Authorize(Roles = "Administrator"), HttpGet("Users/{userId}/")]
-        public ActionResult<AlphaBeta[]?> GetUser(string userId)
+        public ActionResult<AlphaBetaResponse> GetUser(string userId)
         {
-            var fp = _context.AlphaBeta.Where(f => f.UserId == userId).ToArray();
-            return fp;
+            var fp = _context.Fifteens.Where(f => f.UserId == userId).FirstOrDefault();
+            if (fp != null)
+            {
+                return new AlphaBetaResponse() { Problem = fp.Problem?.FromJson<ProblemTree<ABNode>>(), Solution = fp.Solution?.FromJson<List<ABNodeModel>>(), UserSolution = fp.UserSolution?.FromJson<List<ABNodeModel>>() };
+            }
+            return NotFound();
         }
 
         [Authorize(Roles = "Administrator"), HttpPut("Users/{userId}/")]
-        public async Task<ActionResult> UpdateABTest(string userId, [System.Web.Http.FromUri] int? depth = null, [System.Web.Http.FromUri] bool generate = false)
+        public async Task<ActionResult> UpdateABTest(string userId, [System.Web.Http.FromUri] int? height = null, [System.Web.Http.FromUri] bool generate = false)
         {
             var fp = await _context.AlphaBeta.FirstOrDefaultAsync(f => f.UserId == userId);
             if (fp == null)
             {
-                return NotFound();
+                if (_context.Users.FirstOrDefault(f => f.Id == userId) != null)
+                {
+                    _context.AlphaBeta.Add(new AlphaBeta() { UserId = userId });
+                    _context.SaveChanges();
+                    fp = await _context.AlphaBeta.FirstOrDefaultAsync(f => f.UserId == userId);
+                } 
+                else
+                {
+                    return NotFound();
+                }
             }
-            if (depth != null)
+            if (height != null)
             {
-                fp.TreeDepth = (int)depth;
+                fp.TreeHeight = (int)height;
             }
             fp.Problem = null;
             fp.Solution = null;
             fp.IsSolved = false;
             if (generate == true)
             {
-                ABNode aNode = new ABNode();
-                var tree = AlphaBetaService.GenerateTree(aNode, fp.TreeDepth);
+                var tree = AlphaBetaService.GenerateTree(fp.TreeHeight);
                 fp.Problem = tree.ToJson();
-
-                fp.Solution = AlphaBetaService.GenerateSolution(tree).ToJson();
             }
             _context.AlphaBeta.Update(fp);
             await _context.SaveChangesAsync();
@@ -166,6 +179,7 @@ namespace AICourseTester.Controllers
             if (fp == null) { return; }
             fp.Problem = null;
             fp.Solution = null;
+            fp.UserSolution = null;
             fp.IsSolved = false;
             _context.AlphaBeta.Update(fp);
             _context.SaveChanges();

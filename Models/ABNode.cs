@@ -2,6 +2,7 @@
 using Mono.TextTemplating;
 using System.Text.Json.Serialization;
 
+
 namespace AICourseTester.Models
 {
     public class ABNode : Node<ABNode>
@@ -9,6 +10,7 @@ namespace AICourseTester.Models
         [JsonIgnore]
         public int depth = 0;
         [JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
         public ABNode? prv { get; set; } = null;
         public int Id { get; set; }
         public int A { get; set; } = int.MinValue;
@@ -29,9 +31,7 @@ namespace AICourseTester.Models
         public bool Equals(ABNode? other)
         {
             if (other == null) return false;
-            if (Id != other.Id || depth != other.depth) return false;
-            if (prv != other.prv) return false;
-            if (A != other.A || B != other.B) return false;
+            if (Id != other.Id) return false;
             return true;
         }
 
@@ -39,6 +39,21 @@ namespace AICourseTester.Models
         {
             A = int.MinValue;
             B = int.MaxValue;
+        }
+    }
+
+    public class ABNodeModel
+    {
+        public int Id { get; set; }
+        public int A { get; set; } = int.MinValue;
+        public int B { get; set; } = int.MaxValue;
+
+        public ABNodeModel() { }
+        public ABNodeModel(ABNode node)
+        {
+            Id = node.Id;
+            A = node.A;
+            B = node.B;
         }
     }
 }

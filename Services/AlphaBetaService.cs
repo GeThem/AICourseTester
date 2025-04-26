@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.VisualBasic;
 using Mono.TextTemplating;
+using NuGet.Protocol;
 using System.Collections;
 using System.Drawing.Printing;
 using System.Numerics;
@@ -45,16 +46,19 @@ namespace AICourseTester.Services
             }
         }
 
-        public static void Search(ProblemTree<ABNode> tree)
+        public static List<ABNodeModel> Search(ProblemTree<ABNode> tree)
         {
             PrepareTree(tree);
-            _searchSubNode(tree.Head);
+            List<ABNodeModel> solution = new List<ABNodeModel>();
+            _searchSubNode(tree.Head, solution);
+            return solution;
         }
 
-        private static (int, int) _searchSubNode(ABNode node)
+        private static (int, int) _searchSubNode(ABNode node, List<ABNodeModel> solution)
         {
             if (node.SubNodes == null)
             {
+                solution.Add(new ABNodeModel(node));
                 return (node.A, node.B);
             }
             if (node.prv != null)
@@ -66,12 +70,12 @@ namespace AICourseTester.Services
             {
                 if (node.depth % 2 == 1)
                 {
-                    var (newA, newB) = _searchSubNode(subNode);
+                    var (newA, newB) = _searchSubNode(subNode, solution);
                     node.B = Math.Min(Math.Min(newB, newA), node.B);
                 }
                 else
                 {
-                    var (newA, newB) = _searchSubNode(subNode);
+                    var (newA, newB) = _searchSubNode(subNode, solution);
                     node.A = Math.Max(newB, Math.Max(newA, node.A));
                 }
                 if (node.A >= node.B)
@@ -79,13 +83,14 @@ namespace AICourseTester.Services
                     break;
                 }
             }
+            solution.Add(new ABNodeModel(node));
             return (node.A, node.B);
         }
 
-        public static ProblemTree<ABNode> GenerateTree(ABNode startState, int height)
+        public static ProblemTree<ABNode> GenerateTree(int height)
         {
             ProblemTree<ABNode> tree = new ProblemTree<ABNode>();
-            tree.Head = startState;
+            tree.Head = new ABNode();
             tree.Head.Id = 0;
             if (height == 0)
             {
@@ -99,9 +104,9 @@ namespace AICourseTester.Services
         {
             node.Id = id;
             node.prv = prv;
-            if (node.prv != null)
+            if (prv != null)
             {
-                node.depth = node.prv.depth + 1;
+                node.depth = prv.depth + 1;
             }
             if (height == 0)
             {

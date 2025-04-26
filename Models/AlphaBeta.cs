@@ -1,4 +1,5 @@
 ﻿using AICourseTester.Data;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace AICourseTester.Models
@@ -11,7 +12,15 @@ namespace AICourseTester.Models
         public ApplicationUser User { get; set; } = null!;
         public string? Problem { get; set; }
         public string? Solution { get; set; }
-        public int TreeDepth { get; set; }
+        public string? UserSolution { get; set; }
+        public int TreeHeight { get; set; } = 3;
         public bool IsSolved { get; set; } = false;
+    }
+
+    public class AlphaBetaResponse
+    {
+        public ProblemTree<ABNode>? Problem { get; set; }
+        public List<ABNodeModel>? Solution { get; set; }
+        public List<ABNodeModel>? UserSolution { get; set; }
     }
 }
