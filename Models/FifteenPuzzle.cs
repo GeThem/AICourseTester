@@ -16,7 +16,7 @@ namespace AICourseTester.Models
         public string? UserSolution { get; set; }
         public int? Heuristic { get; set; }
         public int Dimensions { get; set; }
-        public int TreeDepth { get; set; }
+        public int TreeHeight { get; set; }
         public bool IsSolved { get; set; } = false;
     }
 

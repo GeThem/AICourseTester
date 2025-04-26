@@ -33,11 +33,11 @@ namespace AICourseTester.Controllers
         }
 
         [HttpGet("FifteenPuzzle/Train")]
-        public List<ANode> GetFPTrain([System.Web.Http.FromUri] int depth = 3, [System.Web.Http.FromUri] int dimensions = 4)
+        public List<ANode> GetFPTrain([System.Web.Http.FromUri] int height = 3, [System.Web.Http.FromUri] int dimensions = 4)
         {
             ANode aNode = new ANode(dimensions);
             FifteenPuzzleService.ShuffleState(aNode);
-            var (_, list) = FifteenPuzzleService.GenerateTree(aNode, depth);
+            var (_, list) = FifteenPuzzleService.GenerateTree(aNode, height);
             return list;
         }
 
@@ -65,7 +65,7 @@ namespace AICourseTester.Controllers
             }
             if (fp.IsSolved)
             {
-                var (_, problem) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeDepth);
+                var (_, problem) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight);
                 var solution = fp.Solution.FromJson<List<ANodeModel>>();
                 var userSolution = fp.UserSolution.FromJson<List<ANodeModel>>();
                 return new FifteenPuzzleResponse() { Problem = problem, Solution = solution, UserSolution = userSolution };
@@ -74,14 +74,14 @@ namespace AICourseTester.Controllers
             {
                 ANode aNode = new ANode(fp.Dimensions);
                 FifteenPuzzleService.ShuffleState(aNode);
-                var (_, listInner) = FifteenPuzzleService.GenerateTree(aNode, fp.TreeDepth);
+                var (_, listInner) = FifteenPuzzleService.GenerateTree(aNode, fp.TreeHeight);
 
                 fp.Problem = aNode.State.ToJson();
                 _context.Fifteens.Update(fp);
                 await _context.SaveChangesAsync();
                 return new FifteenPuzzleResponse() { Problem = listInner };
             }
-            var (_, list) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeDepth);
+            var (_, list) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight);
             return new FifteenPuzzleResponse() { Problem = list };
         }
 
@@ -97,7 +97,7 @@ namespace AICourseTester.Controllers
             {
                 return new FifteenPuzzleResponse() { Solution = fp.Solution.FromJson<List<ANodeModel>>() };
             }
-            var (problemTree, problem) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeDepth); 
+            var (problemTree, problem) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight); 
 
             fp.UserSolution = userSolution.ToJson();
             if (fp.Heuristic == null)
@@ -121,29 +121,37 @@ namespace AICourseTester.Controllers
         }
 
         [Authorize(Roles = "Administrator"), HttpGet("FifteenPuzzle/Users/{userId}/")]
-        public ActionResult<FifteenPuzzle?> GetUser(string userId)
+        public ActionResult<FifteenPuzzleResponse> GetUser(string userId)
         {
             var fp = _context.Fifteens.Where(f => f.UserId == userId).FirstOrDefault();
             if (fp != null)
             {
-                var (tree, list) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeDepth);
+                var (_, list) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight);
+                return new FifteenPuzzleResponse() { Problem = list, Solution = fp.Solution?.FromJson<List<ANodeModel>>(), UserSolution = fp.UserSolution?.FromJson<List<ANodeModel>>()};
             }
-            return fp;
+            return NotFound();
         }
 
         [Authorize(Roles = "Administrator"), HttpPut("FifteenPuzzle/Users/{userId}/")]
-        public async Task<ActionResult> UpdateFPTest(int[][]? State, string userId, [System.Web.Http.FromUri] int? depth = null, [System.Web.Http.FromUri] int? dimensions = null, [System.Web.Http.FromUri] bool generate = false)
+        public async Task<ActionResult> UpdateFPTest(int[][]? State, string userId, [System.Web.Http.FromUri] int? height = null, [System.Web.Http.FromUri] int? dimensions = null, [System.Web.Http.FromUri] bool generate = false)
         {
             var fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == userId);
-            if (fp == null && _context.Users.FirstOrDefault(f => f.Id == userId) != null)
+            if (fp == null)
             {
-                _context.Fifteens.Add(new FifteenPuzzle() { UserId = userId });
-                _context.SaveChanges();
-                fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == userId);
+                if ( _context.Users.FirstOrDefault(f => f.Id == userId) != null)
+                {
+                    _context.Fifteens.Add(new FifteenPuzzle() { UserId = userId });
+                    _context.SaveChanges();
+                    fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == userId);
+                } 
+                else
+                {
+                    return NotFound();
+                }
             }
-            if (depth != null)
+            if (height != null)
             {
-                fp.TreeDepth = (int)depth;
+                fp.TreeHeight = (int)height;
             }
             if (dimensions != null)
             {
@@ -175,6 +183,7 @@ namespace AICourseTester.Controllers
             if (fp == null) { return; }
             fp.Problem = null;
             fp.Solution = null;
+            fp.UserSolution = null;
             fp.IsSolved = false;
             _context.Fifteens.Update(fp);
             _context.SaveChanges();

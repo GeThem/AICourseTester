@@ -29,7 +29,7 @@ namespace AICourseTester.Data
                 .HasDefaultValue(4);
 
             modelBuilder.Entity<FifteenPuzzle>()
-                .Property(fp => fp.TreeDepth)
+                .Property(fp => fp.TreeHeight)
                 .HasDefaultValue(3);
 
             modelBuilder.Entity<FifteenPuzzle>()
@@ -37,7 +37,7 @@ namespace AICourseTester.Data
                 .HasDefaultValue(true);
 
             modelBuilder.Entity<AlphaBeta>()
-                .Property(fp => fp.TreeDepth)
+                .Property(fp => fp.TreeHeight)
                 .HasDefaultValue(3);
 
             modelBuilder.Entity<AlphaBeta>()
