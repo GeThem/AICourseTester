@@ -16,13 +16,6 @@ namespace AICourseTester.Services
 {
     public class AlphaBetaService
     {
-        public static ProblemTree<ABNode> GenerateSolution(ProblemTree<ABNode> tree)
-        {
-            var newTree = (ProblemTree<ABNode>)tree.Clone();
-            Search(newTree);
-            return newTree;
-        }
-
         public static void PrepareTree(ProblemTree<ABNode> tree)
         {
             tree.Head.depth = 0;

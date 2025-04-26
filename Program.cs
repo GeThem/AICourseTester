@@ -68,11 +68,9 @@ using (var scope = app.Services.CreateScope())
         await userStore.SetUserNameAsync(user, email, CancellationToken.None);
         await emailStore.SetEmailAsync(user, email, CancellationToken.None);
 
-        await userManager.CreateAsync(user, "Abc123-");
+        await userManager.CreateAsync(user, builder.Configuration["Admin:Pw"]);
         await userManager.AddToRoleAsync(user, "Administrator");
     }
-
-
 }
 
 app.Run();
