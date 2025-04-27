@@ -1,6 +1,4 @@
 ﻿using AICourseTester.Data;
-using Microsoft.AspNetCore.Identity;
-using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace AICourseTester.Models

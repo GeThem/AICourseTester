@@ -1,16 +1,5 @@
 ﻿using AICourseTester.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.CodeAnalysis.Elfie.Diagnostics;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
-using Microsoft.VisualBasic;
-using Mono.TextTemplating;
-using NuGet.Protocol;
-using System.Collections;
-using System.Drawing.Printing;
-using System.Numerics;
 using System.Security.Cryptography;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AICourseTester.Services
 {

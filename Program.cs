@@ -1,11 +1,6 @@
 using AICourseTester.Data;
-using Laraue.EfCoreTriggers.Common.Extensions;
-using Laraue.EfCoreTriggers.PostgreSql.Extensions;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Writers;
-using System.ComponentModel.DataAnnotations;
 
 var builder = WebApplication.CreateBuilder(args);
 

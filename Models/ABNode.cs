@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Mono.TextTemplating;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 
 namespace AICourseTester.Models

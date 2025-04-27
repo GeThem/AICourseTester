@@ -1,18 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NuGet.Protocol;
-using System.Text.Json;
 using AICourseTester.Models;
 using AICourseTester.Services;
 using AICourseTester.Data;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
-using System.Xml.Linq;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.CodeAnalysis;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860

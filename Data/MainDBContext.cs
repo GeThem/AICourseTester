@@ -2,9 +2,6 @@
 using AICourseTester.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using System.Reflection.Metadata;
-using AICourseTester.Services;
-using Laraue.EfCoreTriggers.Common.Extensions;
 
 namespace AICourseTester.Data
 {
