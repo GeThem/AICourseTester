@@ -32,12 +32,12 @@ namespace AICourseTester.Controllers
         }
 
         //[HttpGet("Train/Test")]
-        //public ProblemTree<ABNode> GetABTrainTest()
+        //public ActionResult<AlphaBetaResponse> GetABTrainTest()
         //{
         //    ABNode aNode = new ABNode();
         //    aNode.SubNodes = [new ABNode(), new ABNode()];
         //    int i = -1;
-        //    int[] vals = [ 10, 5, 7, 11, 12, 8, 9, 8, 5, 12, 11, 12, 9, 8, 7, 10 ];
+        //    int[] vals = [10, 5, 7, 11, 12, 8, 9, 8, 5, 12, 11, 12, 9, 8, 7, 10];
         //    foreach (var node1 in aNode.SubNodes)
         //    {
         //        node1.SubNodes = [new ABNode(), new ABNode()];
@@ -46,12 +46,13 @@ namespace AICourseTester.Controllers
         //            node2.SubNodes = [new ABNode(), new ABNode()];
         //            foreach (var node3 in node2.SubNodes)
         //            {
-        //                node3.SubNodes = [new ABNode() { A=vals[++i], B=vals[i] }, new ABNode() { A = vals[++i], B = vals[i] }];
+        //                node3.SubNodes = [new ABNode() { A = vals[++i], B = vals[i] }, new ABNode() { A = vals[++i], B = vals[i] }];
         //            }
         //        }
         //    }
         //    var tree = new ProblemTree<ABNode>() { Head = aNode };
-        //    return tree;
+        //    var sol = AlphaBetaService.Search((ProblemTree<ABNode>)tree.Clone());
+        //    return new AlphaBetaResponse() { Problem=tree, Solution=sol };
         //}
 
         [HttpPost("Train")]
