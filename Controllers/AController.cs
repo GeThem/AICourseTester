@@ -171,16 +171,17 @@ namespace AICourseTester.Controllers
         }
 
         [Authorize(Roles = "Administrator"), HttpDelete("FifteenPuzzle/Users/{userId}")]
-        public async void DeleteFPTest(string userId)
+        public async Task<ActionResult> DeleteFPTest(string userId)
         {
             var fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == userId);
-            if (fp == null) { return; }
+            if (fp == null) { return NotFound(); }
             fp.Problem = null;
             fp.Solution = null;
             fp.UserSolution = null;
             fp.IsSolved = false;
             _context.Fifteens.Update(fp);
             _context.SaveChanges();
+            return Ok();
         }
     }
 }
