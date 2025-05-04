@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace AICourseTester.Data
 {
+    [Index(nameof(UserName), IsUnique = true)]
     public class ApplicationUser : IdentityUser
     {
         public string? Group { get; set; }

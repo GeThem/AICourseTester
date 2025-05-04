@@ -54,15 +54,12 @@ using (var scope = app.Services.CreateScope())
 
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     var userStore = scope.ServiceProvider.GetRequiredService<IUserStore<ApplicationUser>>();
-    var emailStore = (IUserEmailStore<ApplicationUser>)userStore;
-    string email = "admin@admin.com";
+    string userName = "admin";
 
-    if (await userManager.FindByEmailAsync(email) == null)
+    if (await userManager.FindByEmailAsync(userName) == null)
     {
         var user = new ApplicationUser();
-        await userStore.SetUserNameAsync(user, email, CancellationToken.None);
-        await emailStore.SetEmailAsync(user, email, CancellationToken.None);
-
+        await userStore.SetUserNameAsync(user, userName, CancellationToken.None);
         await userManager.CreateAsync(user, builder.Configuration["Admin:Pw"]);
         await userManager.AddToRoleAsync(user, "Administrator");
     }
