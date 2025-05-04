@@ -167,16 +167,17 @@ namespace AICourseTester.Controllers
         }
 
         [Authorize(Roles = "Administrator"), HttpDelete("Users/{userId}")]
-        public async void DeleteABTest(string userId)
+        public async Task<ActionResult> DeleteABTest(string userId)
         {
             var fp = await _context.AlphaBeta.FirstOrDefaultAsync(f => f.UserId == userId);
-            if (fp == null) { return; }
+            if (fp == null) { return NotFound(); }
             fp.Problem = null;
             fp.Solution = null;
             fp.UserSolution = null;
             fp.IsSolved = false;
             _context.AlphaBeta.Update(fp);
             _context.SaveChanges();
+            return Ok();
         }
     }
 }

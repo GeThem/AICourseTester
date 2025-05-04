@@ -32,7 +32,7 @@ namespace AICourseTester.Data
 
             modelBuilder.Entity<FifteenPuzzle>()
                 .Property(fp => fp.IsSolved)
-                .HasDefaultValue(true);
+                .HasDefaultValue(false);
 
             modelBuilder.Entity<AlphaBeta>()
                 .Property(fp => fp.TreeHeight)
@@ -40,7 +40,7 @@ namespace AICourseTester.Data
 
             modelBuilder.Entity<AlphaBeta>()
                 .Property(fp => fp.IsSolved)
-                .HasDefaultValue(true);
+                .HasDefaultValue(false);
         }
     }
 }
