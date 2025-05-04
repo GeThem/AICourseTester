@@ -8,6 +8,9 @@ using Microsoft.CodeAnalysis;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Authentication.BearerToken;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity.UI.V4.Pages.Account.Internal;
 
 namespace AICourseTester.Controllers
 {
@@ -67,7 +70,7 @@ namespace AICourseTester.Controllers
         }
 
         [Authorize(Roles = "Administrator"), HttpPost("Register")]
-        public async Task<Results<Ok, ValidationProblem>> RegisterUser([FromBody] RegReq registration, [FromServices]IServiceProvider sp)
+        public async Task<Results<Ok, ValidationProblem>> RegisterUser(RegReq registration, [FromServices]IServiceProvider sp)
         {
             var userManager = sp.GetRequiredService<UserManager<ApplicationUser>>();
 
@@ -91,10 +94,10 @@ namespace AICourseTester.Controllers
         }
 
         [HttpPost("Login")]
-        async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> UserLogin([FromBody] LogReq login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies, [FromServices] IServiceProvider sp)
+        public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> LoginUser(LogReq login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies, [FromServices] IServiceProvider sp)
         {
             var signInManager = sp.GetRequiredService<SignInManager<ApplicationUser>>();
-
+            
             var useCookieScheme = (useCookies == true) || (useSessionCookies == true);
             var isPersistent = (useCookies == true) && (useSessionCookies != true);
             signInManager.AuthenticationScheme = useCookieScheme? IdentityConstants.ApplicationScheme : IdentityConstants.BearerScheme;
@@ -119,6 +122,14 @@ namespace AICourseTester.Controllers
             }
 
             return TypedResults.Empty;
+        }
+
+        [Authorize, HttpPost("Logout")]
+        public async Task<ActionResult> LogoutUser([FromServices] IServiceProvider sp)
+        {
+            var signInManager = sp.GetRequiredService<SignInManager<ApplicationUser>>();
+            await signInManager.SignOutAsync();
+            return Ok();
         }
     }
 }
