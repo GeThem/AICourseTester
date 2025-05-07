@@ -4,3 +4,6 @@
 [submodule "front-end"]
 	path = front-end
 	url = https://github.com/moytqq/AIS.git
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/moytqq/AIS.git
