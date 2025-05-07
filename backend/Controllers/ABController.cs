@@ -1,15 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NuGet.Protocol;
-using AICourseTester.Models;
-using AICourseTester.Services;
-using AICourseTester.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using AICourseTester.backend.Data;
+using AICourseTester.backend.Models;
+using AICourseTester.backend.Services;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
-namespace AICourseTester.Controllers
+namespace AICourseTester.backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -143,7 +143,7 @@ namespace AICourseTester.Controllers
                     _context.AlphaBeta.Add(new AlphaBeta() { UserId = userId });
                     _context.SaveChanges();
                     fp = await _context.AlphaBeta.FirstOrDefaultAsync(f => f.UserId == userId);
-                } 
+                }
                 else
                 {
                     return NotFound();

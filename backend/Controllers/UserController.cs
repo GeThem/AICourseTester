@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using AICourseTester.Models;
-using AICourseTester.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -11,8 +9,10 @@ using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity.UI.V4.Pages.Account.Internal;
+using AICourseTester.backend.Data;
+using AICourseTester.backend.Models;
 
-namespace AICourseTester.Controllers
+namespace AICourseTester.backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -70,7 +70,7 @@ namespace AICourseTester.Controllers
         }
 
         [Authorize(Roles = "Administrator"), HttpPost("Register")]
-        public async Task<Results<Ok, ValidationProblem>> RegisterUser(RegReq registration, [FromServices]IServiceProvider sp)
+        public async Task<Results<Ok, ValidationProblem>> RegisterUser(RegReq registration, [FromServices] IServiceProvider sp)
         {
             var userManager = sp.GetRequiredService<UserManager<ApplicationUser>>();
 
@@ -97,10 +97,10 @@ namespace AICourseTester.Controllers
         public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> LoginUser(LogReq login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies, [FromServices] IServiceProvider sp)
         {
             var signInManager = sp.GetRequiredService<SignInManager<ApplicationUser>>();
-            
-            var useCookieScheme = (useCookies == true) || (useSessionCookies == true);
-            var isPersistent = (useCookies == true) && (useSessionCookies != true);
-            signInManager.AuthenticationScheme = useCookieScheme? IdentityConstants.ApplicationScheme : IdentityConstants.BearerScheme;
+
+            var useCookieScheme = useCookies == true || useSessionCookies == true;
+            var isPersistent = useCookies == true && useSessionCookies != true;
+            signInManager.AuthenticationScheme = useCookieScheme ? IdentityConstants.ApplicationScheme : IdentityConstants.BearerScheme;
 
             var result = await signInManager.PasswordSignInAsync(login.UserName, login.Password, isPersistent, lockoutOnFailure: true);
 

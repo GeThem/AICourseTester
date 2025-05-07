@@ -1,7 +1,7 @@
-﻿using AICourseTester.Models;
+﻿using AICourseTester.backend.Models;
 using System.Security.Cryptography;
 
-namespace AICourseTester.Services
+namespace AICourseTester.backend.Services
 {
     public class AlphaBetaService
     {

@@ -1,4 +1,4 @@
-﻿namespace AICourseTester.Models
+﻿namespace AICourseTester.backend.Models
 {
     public sealed class LogReq
     {

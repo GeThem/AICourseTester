@@ -1,4 +1,4 @@
-using AICourseTester.Data;
+using AICourseTester.backend.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 

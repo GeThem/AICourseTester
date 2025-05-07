@@ -1,17 +1,17 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NuGet.Protocol;
-using AICourseTester.Models;
-using AICourseTester.Services;
-using AICourseTester.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using Microsoft.CodeAnalysis;
+using AICourseTester.backend.Data;
+using AICourseTester.backend.Models;
+using AICourseTester.backend.Services;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
-namespace AICourseTester.Controllers
+namespace AICourseTester.backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -91,7 +91,7 @@ namespace AICourseTester.Controllers
             {
                 return new FifteenPuzzleResponse() { Solution = fp.Solution.FromJson<List<ANodeModel>>() };
             }
-            var (problemTree, problem) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight); 
+            var (problemTree, problem) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight);
 
             fp.UserSolution = userSolution.ToJson();
             if (fp.Heuristic == null)
@@ -121,7 +121,7 @@ namespace AICourseTester.Controllers
             if (fp != null)
             {
                 var (_, list) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight);
-                return new FifteenPuzzleResponse() { Problem = list, Solution = fp.Solution?.FromJson<List<ANodeModel>>(), UserSolution = fp.UserSolution?.FromJson<List<ANodeModel>>()};
+                return new FifteenPuzzleResponse() { Problem = list, Solution = fp.Solution?.FromJson<List<ANodeModel>>(), UserSolution = fp.UserSolution?.FromJson<List<ANodeModel>>() };
             }
             return NotFound();
         }
@@ -132,12 +132,12 @@ namespace AICourseTester.Controllers
             var fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == userId);
             if (fp == null)
             {
-                if ( _context.Users.FirstOrDefault(f => f.Id == userId) != null)
+                if (_context.Users.FirstOrDefault(f => f.Id == userId) != null)
                 {
                     _context.Fifteens.Add(new FifteenPuzzle() { UserId = userId });
                     _context.SaveChanges();
                     fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == userId);
-                } 
+                }
                 else
                 {
                     return NotFound();

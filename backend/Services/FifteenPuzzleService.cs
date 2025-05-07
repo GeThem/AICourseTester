@@ -1,7 +1,7 @@
-﻿using AICourseTester.Models;
+﻿using AICourseTester.backend.Models;
 using System.Security.Cryptography;
 
-namespace AICourseTester.Services
+namespace AICourseTester.backend.Services
 {
     public class FifteenPuzzleService
     {
@@ -11,7 +11,8 @@ namespace AICourseTester.Services
         {
             if (node.State == null) return;
             var (x, y) = (-1, -1);
-            for (int i = 0; i < node.State.Length; i++) {
+            for (int i = 0; i < node.State.Length; i++)
+            {
                 for (int j = 0; j < node.State[0].Length; j++)
                 {
                     if (node.State[i][j] == 0)
@@ -94,7 +95,8 @@ namespace AICourseTester.Services
                     {
                         node.SubNodes = new();
                     }
-                    if (node.SubNodesIds.Contains(subNode.Id)) {
+                    if (node.SubNodesIds.Contains(subNode.Id))
+                    {
                         node.SubNodes.Add(subNode);
                     }
                 }
@@ -135,7 +137,7 @@ namespace AICourseTester.Services
                 node.SubNodes = new();
             }
 
-            foreach (var (x, y) in ((int, int)[])[ (-1, 0), (1, 0), (0, -1), (0, 1) ] )
+            foreach (var (x, y) in ((int, int)[])[(-1, 0), (1, 0), (0, -1), (0, 1)])
             {
                 int Nox = ox + x, Noy = oy + y;
                 if (Nox < 0 || Noy < 0 || Nox >= state[0].Length || Noy >= state.Length)
@@ -328,5 +330,5 @@ namespace AICourseTester.Services
             }
             return score;
         }
-    }   
+    }
 }

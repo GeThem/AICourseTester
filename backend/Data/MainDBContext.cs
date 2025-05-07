@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using AICourseTester.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using AICourseTester.backend.Models;
 
-namespace AICourseTester.Data
+namespace AICourseTester.backend.Data
 {
     [Index(nameof(UserName), IsUnique = true)]
     public class ApplicationUser : IdentityUser

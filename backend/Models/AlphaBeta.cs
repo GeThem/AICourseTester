@@ -1,7 +1,7 @@
-﻿using AICourseTester.Data;
+﻿using AICourseTester.backend.Data;
 using System.Text.Json.Serialization;
 
-namespace AICourseTester.Models
+namespace AICourseTester.backend.Models
 {
     public class AlphaBeta
     {
