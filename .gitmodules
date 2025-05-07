@@ -1,3 +1,6 @@
 [submodule "AIS"]
 	path = AIS
 	url = https://github.com/moytqq/AIS.git
+[submodule "front-end"]
+	path = front-end
+	url = https://github.com/moytqq/AIS.git
