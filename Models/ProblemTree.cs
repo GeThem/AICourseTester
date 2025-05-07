@@ -1,4 +1,4 @@
-﻿namespace AICourseTester.backend.Models
+﻿namespace AICourseTester.Models
 {
     public class ProblemTree<T> : ICloneable, IEquatable<ProblemTree<T>> where T : Node<T>
     {

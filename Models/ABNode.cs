@@ -1,7 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-
-namespace AICourseTester.backend.Models
+namespace AICourseTester.Models
 {
     public class ABNode : Node<ABNode>
     {

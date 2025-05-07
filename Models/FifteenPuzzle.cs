@@ -1,7 +1,7 @@
-﻿using AICourseTester.backend.Data;
+﻿using AICourseTester.Data;
 using System.Text.Json.Serialization;
 
-namespace AICourseTester.backend.Models
+namespace AICourseTester.Models
 {
     public class FifteenPuzzle
     {

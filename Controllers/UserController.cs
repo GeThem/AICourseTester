@@ -9,10 +9,10 @@ using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity.UI.V4.Pages.Account.Internal;
-using AICourseTester.backend.Data;
-using AICourseTester.backend.Models;
+using AICourseTester.Data;
+using AICourseTester.Models;
 
-namespace AICourseTester.backend.Controllers
+namespace AICourseTester.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

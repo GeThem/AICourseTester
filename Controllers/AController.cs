@@ -5,13 +5,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using Microsoft.CodeAnalysis;
-using AICourseTester.backend.Data;
-using AICourseTester.backend.Models;
-using AICourseTester.backend.Services;
+using AICourseTester.Data;
+using AICourseTester.Models;
+using AICourseTester.Services;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
-namespace AICourseTester.backend.Controllers
+namespace AICourseTester.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
