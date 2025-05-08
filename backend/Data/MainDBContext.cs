@@ -5,18 +5,14 @@ using AICourseTester.Models;
 
 namespace AICourseTester.Data
 {
-    [Index(nameof(UserName), IsUnique = true)]
-    public class ApplicationUser : IdentityUser
-    {
-        public string? Group { get; set; }
-    }
-
     public class MainDbContext : IdentityDbContext<ApplicationUser>
     {
         public MainDbContext(DbContextOptions<MainDbContext> options) : base(options) { }
 
         public DbSet<FifteenPuzzle> Fifteens { get; set; } = null!;
         public DbSet<AlphaBeta> AlphaBeta { get; set; } = null!;
+        public DbSet<Group> Groups { get; set; } = null!;
+        public DbSet<UserGroups> UserGroups { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -41,6 +37,8 @@ namespace AICourseTester.Data
             modelBuilder.Entity<AlphaBeta>()
                 .Property(fp => fp.IsSolved)
                 .HasDefaultValue(false);
+
+            modelBuilder.Entity<UserGroups>().HasNoKey();
         }
     }
 }

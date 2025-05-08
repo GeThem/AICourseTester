@@ -1,4 +1,5 @@
 using AICourseTester.Data;
+using AICourseTester.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
