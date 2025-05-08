@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AICourseTester.Migrations
 {
     /// <inheritdoc />
-    public partial class main : Migration
+    public partial class MergedMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -31,7 +31,6 @@ namespace AICourseTester.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
-                    Group = table.Column<string>(type: "text", nullable: true),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -53,6 +52,19 @@ namespace AICourseTester.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Groups",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Groups", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -69,6 +81,30 @@ namespace AICourseTester.Migrations
                         name: "FK_AspNetRoleClaims_AspNetRoles_RoleId",
                         column: x => x.RoleId,
                         principalTable: "AspNetRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AlphaBeta",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    Problem = table.Column<string>(type: "text", nullable: true),
+                    Solution = table.Column<string>(type: "text", nullable: true),
+                    UserSolution = table.Column<string>(type: "text", nullable: true),
+                    TreeHeight = table.Column<int>(type: "integer", nullable: false, defaultValue: 3),
+                    IsSolved = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AlphaBeta", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AlphaBeta_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -167,10 +203,11 @@ namespace AICourseTester.Migrations
                     UserId = table.Column<string>(type: "text", nullable: false),
                     Problem = table.Column<string>(type: "text", nullable: true),
                     Solution = table.Column<string>(type: "text", nullable: true),
+                    UserSolution = table.Column<string>(type: "text", nullable: true),
                     Heuristic = table.Column<int>(type: "integer", nullable: true),
                     Dimensions = table.Column<int>(type: "integer", nullable: false, defaultValue: 4),
-                    TreeDepth = table.Column<int>(type: "integer", nullable: false, defaultValue: 3),
-                    IsSolved = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
+                    TreeHeight = table.Column<int>(type: "integer", nullable: false, defaultValue: 3),
+                    IsSolved = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
@@ -182,6 +219,34 @@ namespace AICourseTester.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "UserGroups",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    GroupId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.ForeignKey(
+                        name: "FK_UserGroups_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserGroups_Groups_GroupId",
+                        column: x => x.GroupId,
+                        principalTable: "Groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AlphaBeta_UserId",
+                table: "AlphaBeta",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -215,6 +280,12 @@ namespace AICourseTester.Migrations
                 column: "NormalizedEmail");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AspNetUsers_UserName",
+                table: "AspNetUsers",
+                column: "UserName",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "UserNameIndex",
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
@@ -225,31 +296,22 @@ namespace AICourseTester.Migrations
                 table: "Fifteens",
                 column: "UserId");
 
-            migrationBuilder.Sql("""
-                CREATE OR REPLACE FUNCTION InsertFifteen() RETURNS trigger AS $InsertFifteen$
-                    BEGIN
-                       INSERT INTO "Fifteens"(
-                        "UserId")
-                    values (
-                        NEW."Id"
-                        );
+            migrationBuilder.CreateIndex(
+                name: "IX_UserGroups_GroupId",
+                table: "UserGroups",
+                column: "GroupId");
 
-                    RETURN NEW;
-                END;
-                   $InsertFifteen$ LANGUAGE plpgsql;
-
-                CREATE OR REPLACE TRIGGER insertFifteen AFTER INSERT ON "AspNetUsers"
-                FOR EACH ROW EXECUTE PROCEDURE InsertFifteen();
-                """);
+            migrationBuilder.CreateIndex(
+                name: "IX_UserGroups_UserId",
+                table: "UserGroups",
+                column: "UserId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql("""
-                DROP FUNCTION InsertFifteen;
-                DROP TRIGGER insertFifteen;
-                """);
+            migrationBuilder.DropTable(
+                name: "AlphaBeta");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
@@ -270,10 +332,16 @@ namespace AICourseTester.Migrations
                 name: "Fifteens");
 
             migrationBuilder.DropTable(
+                name: "UserGroups");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Groups");
         }
     }
 }
