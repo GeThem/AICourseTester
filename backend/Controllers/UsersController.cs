@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity.UI.V4.Pages.Account.Internal;
 using AICourseTester.Data;
 using AICourseTester.Models;
+using Microsoft.Extensions.Configuration.UserSecrets;
 
 namespace AICourseTester.Controllers
 {
@@ -150,12 +151,23 @@ namespace AICourseTester.Controllers
 
             var user = new ApplicationUser();
             await userStore.SetUserNameAsync(user, userName, CancellationToken.None);
+            user.Name = registration.Name;
+            user.SecondName = registration.SecondName;
+            user.Patronymic = registration.Patronymic;
             var result = await userManager.CreateAsync(user, registration.Password);
 
             if (!result.Succeeded)
             {
                 return CreateValidationProblem(result);
             }
+
+            if (registration.GroupId != null)
+            {
+                var userId = await _context.Users.FirstAsync(u => u.UserName == userName);
+                _context.UserGroups.Add(new UserGroups { UserId = userId.Id, GroupId = (int)registration.GroupId });
+                await _context.SaveChangesAsync();
+            }
+
             return TypedResults.Ok();
         }
 
