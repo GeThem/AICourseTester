@@ -57,13 +57,29 @@ namespace AICourseTester.Controllers
         }
 
         [Authorize(Roles = "Administrator"), HttpPut("{userId}")]
-        public async Task<ActionResult> UpdateUser(int groupId, string userId)
+        public async Task<ActionResult> UpdateUser(int? groupId, string? name, string? secondName, string? patronymic, string userId)
         {
-            if (await _context.Users.FirstOrDefaultAsync(f => f.Id == userId) == null)
+            var user = await _context.Users.FirstOrDefaultAsync(f => f.Id == userId);
+            if (user == null)
             {
                 return NotFound();
             }
-            _context.UserGroups.Add(new UserGroups { UserId = userId, GroupId = groupId });
+            if (groupId != null)
+            {
+                _context.UserGroups.Add(new UserGroups { UserId = userId, GroupId = (int)groupId });
+            }
+            if (name != null)
+            {
+                user.Name = name;
+            }
+            if (secondName != null)
+            {
+                user.SecondName = secondName;
+            }
+            if (patronymic != null)
+            {
+                user.Patronymic = patronymic;
+            }
             await _context.SaveChangesAsync();
             return Ok();
         }
