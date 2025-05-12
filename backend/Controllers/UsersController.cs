@@ -16,12 +16,12 @@ namespace AICourseTester.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController : Controller
+    public class UsersController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly MainDbContext _context;
 
-        public UserController(MainDbContext context, UserManager<ApplicationUser> userManager)
+        public UsersController(MainDbContext context, UserManager<ApplicationUser> userManager)
         {
             _userManager = userManager;
             _context = context;
@@ -66,6 +66,21 @@ namespace AICourseTester.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
+
+        [Authorize(Roles = "Administrator"), HttpGet("Groups")]
+        public async Task<ActionResult<Group[]>> GetGroups()
+        {
+            return await _context.Groups.ToArrayAsync();
+        }
+
+        [Authorize(Roles = "Administrator"), HttpPost("Groups")]
+        public async Task<ActionResult> AddGroup(string groupName)
+        {
+            _context.Groups.Add(new Group { Name = groupName });
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
         public class UserData
         {
             public required string Id { get; set; }
@@ -75,9 +90,9 @@ namespace AICourseTester.Controllers
             public string? Group { get; set; }
         }
 
-        public async Task<string?> GetGroup(string id)
+        private async Task<string?> GetGroup(string id)
         {
-            var result = await _context.UserGroups.FirstOrDefaultAsync(ug => ug.UserId == id);
+            var result = await _context.UserGroups.Include(g => g.Group).FirstOrDefaultAsync(ug => ug.UserId == id);
             return result?.Group.Name;
         }
 

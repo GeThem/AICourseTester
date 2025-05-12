@@ -38,8 +38,6 @@ namespace AICourseTester.Data
                 .Property(fp => fp.IsSolved)
                 .HasDefaultValue(false);
 
-            modelBuilder.Entity<UserGroups>().HasNoKey();
-
             modelBuilder.Entity<ApplicationUser>().Ignore(c => c.Email)
                                           .Ignore(c => c.NormalizedEmail)
                                           .Ignore(c => c.EmailConfirmed)

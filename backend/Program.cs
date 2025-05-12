@@ -34,7 +34,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapIdentityApi<ApplicationUser>();
+//app.MapIdentityApi<ApplicationUser>();
 
 app.UseHttpsRedirection();
 
@@ -57,7 +57,7 @@ using (var scope = app.Services.CreateScope())
     var userStore = scope.ServiceProvider.GetRequiredService<IUserStore<ApplicationUser>>();
     string userName = "admin";
 
-    if (await userManager.FindByEmailAsync(userName) == null)
+    if (await userManager.FindByNameAsync(userName) == null)
     {
         var user = new ApplicationUser();
         await userStore.SetUserNameAsync(user, userName, CancellationToken.None);

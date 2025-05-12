@@ -1,5 +1,9 @@
-﻿namespace AICourseTester.Models
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+
+namespace AICourseTester.Models
 {
+    [PrimaryKey(nameof(UserId), nameof(GroupId))]
     public class UserGroups
     {
         public string UserId { get; set; } = null!;
