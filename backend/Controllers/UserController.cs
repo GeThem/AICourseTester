@@ -66,6 +66,59 @@ namespace AICourseTester.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
+        public class UserData
+        {
+            public required string Id { get; set; }
+            public string? Name { get; set; }
+            public string? SecondName { get; set; }
+            public string? Patronymic { get; set; }
+            public string? Group { get; set; }
+        }
+
+        public async Task<string?> GetGroup(string id)
+        {
+            var result = await _context.UserGroups.FirstOrDefaultAsync(ug => ug.UserId == id);
+            return result?.Group.Name;
+        }
+
+        [Authorize(Roles = "Administrator"), HttpGet("{userId}")]
+        public async Task<ActionResult<UserData?>> GetUser(string userId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(f => f.Id == userId);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            return new UserData
+            {
+                Id = user.Id,
+                Name = user.Name,
+                SecondName = user.SecondName,
+                Patronymic = user.Patronymic,
+                Group = await GetGroup(user.Id)
+            };
+        }
+
+        [Authorize(Roles = "Administrator"), HttpGet]
+        public async Task<ActionResult<UserData[]>> GetUsers()
+        {
+            var users = await _context.Users.Select(u => new UserData
+            {
+                Id = u.Id,
+                Name = u.Name,
+                SecondName = u.SecondName,
+                Patronymic = u.Patronymic,
+            }).ToArrayAsync();
+            if (users == null)
+            {
+                return NotFound();
+            }
+            foreach (var user in users)
+            {
+                user.Group = await GetGroup(user.Id);
+            }
+            return users;
+        }
 
         [Authorize(Roles = "Administrator"), HttpPost("Register")]
         public async Task<Results<Ok, ValidationProblem>> RegisterUser(RegReq registration, [FromServices] IServiceProvider sp)
