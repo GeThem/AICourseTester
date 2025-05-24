@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using AICourseTester.Models;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace AICourseTester.Data
 {
@@ -30,9 +31,17 @@ namespace AICourseTester.Data
                 .Property(fp => fp.IsSolved)
                 .HasDefaultValue(false);
 
+            modelBuilder.Entity<FifteenPuzzle>()
+                .Property(fp => fp.Date)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
             modelBuilder.Entity<AlphaBeta>()
-                .Property(fp => fp.TreeHeight)
+                .Property(ab => ab.TreeHeight)
                 .HasDefaultValue(3);
+
+            modelBuilder.Entity<AlphaBeta>()
+                .Property(ab => ab.Date)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             modelBuilder.Entity<AlphaBeta>()
                 .Property(fp => fp.IsSolved)

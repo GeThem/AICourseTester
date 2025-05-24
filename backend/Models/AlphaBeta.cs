@@ -14,6 +14,8 @@ namespace AICourseTester.Models
         public string? UserSolution { get; set; }
         public int TreeHeight { get; set; } = 3;
         public bool IsSolved { get; set; } = false;
+
+        public DateTime Date { get; set; }
     }
 
     public class AlphaBetaResponse

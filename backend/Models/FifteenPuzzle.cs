@@ -15,6 +15,8 @@ namespace AICourseTester.Models
         public int Dimensions { get; set; }
         public int TreeHeight { get; set; }
         public bool IsSolved { get; set; } = false;
+
+        public DateTime Date {  get; set; }
     }
 
     public class FifteenPuzzleResponse
