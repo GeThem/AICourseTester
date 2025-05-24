@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity.UI.V4.Pages.Account.Internal;
 using AICourseTester.Data;
 using AICourseTester.Models;
 using Microsoft.Extensions.Configuration.UserSecrets;
+using Microsoft.IdentityModel.Tokens;
 
 namespace AICourseTester.Controllers
 {
@@ -88,6 +89,24 @@ namespace AICourseTester.Controllers
         public async Task<ActionResult<Group[]>> GetGroups()
         {
             return await _context.Groups.ToArrayAsync();
+        }
+
+        [Authorize(Roles = "Administrator"), HttpGet("Groups/{id}/")]
+        public async Task<ActionResult<UserData[]>> GetGroup(int id)
+        {
+            var group = await _context.UserGroups.Where(g => g.GroupId == id).Select(g => new UserData
+            {
+                Id = g.User.Id,
+                Name = g.User.Name,
+                SecondName = g.User.SecondName,
+                Patronymic = g.User.Patronymic,
+                Group = g.Group.Name
+            }).ToArrayAsync();
+            if (group.IsNullOrEmpty()) 
+            {
+                return NotFound();
+            }
+            return group;
         }
 
         [Authorize(Roles = "Administrator"), HttpPost("Groups")]

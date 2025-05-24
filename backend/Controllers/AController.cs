@@ -8,6 +8,7 @@ using Microsoft.CodeAnalysis;
 using AICourseTester.Data;
 using AICourseTester.Models;
 using AICourseTester.Services;
+using NuGet.Packaging.Signing;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -53,9 +54,7 @@ namespace AICourseTester.Controllers
             var fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == _userManager.GetUserId(User));
             if (fp == null)
             {
-                _context.Fifteens.Add(new FifteenPuzzle() { UserId = _userManager.GetUserId(User) });
-                _context.SaveChanges();
-                fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == _userManager.GetUserId(User));
+                return NotFound();
             }
             if (fp.IsSolved)
             {
@@ -66,14 +65,7 @@ namespace AICourseTester.Controllers
             }
             if (fp.Problem == null)
             {
-                ANode aNode = new ANode(fp.Dimensions);
-                FifteenPuzzleService.ShuffleState(aNode);
-                var (_, listInner) = FifteenPuzzleService.GenerateTree(aNode, fp.TreeHeight);
-
-                fp.Problem = aNode.State.ToJson();
-                _context.Fifteens.Update(fp);
-                await _context.SaveChangesAsync();
-                return new FifteenPuzzleResponse() { Problem = listInner };
+                return NotFound();
             }
             var (_, list) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight);
             return new FifteenPuzzleResponse() { Problem = list };
@@ -94,10 +86,10 @@ namespace AICourseTester.Controllers
             var (problemTree, problem) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight);
 
             fp.UserSolution = userSolution.ToJson();
-            if (fp.Heuristic == null)
-            {
-                fp.Heuristic = RandomNumberGenerator.GetInt32(2) + 1;
-            }
+            //if (fp.Heuristic == null)
+            //{
+            //    fp.Heuristic = RandomNumberGenerator.GetInt32(2) + 1;
+            //}
             var solution = FifteenPuzzleService.Search(problemTree, FifteenPuzzleService.Heuristics[(int)fp.Heuristic - 1]);
             fp.Solution = solution.ToJson();
             fp.IsSolved = true;
@@ -107,10 +99,71 @@ namespace AICourseTester.Controllers
             return new FifteenPuzzleResponse() { Solution = solution };
         }
 
+        private async Task<bool> _assignTask(string userId, int heuristic, int dimensions, int treeHeight)
+        {
+            if ((await _context.Users.FirstOrDefaultAsync(u => u.Id == userId)) == null)
+            {
+                return false;
+            }
+            var fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == userId);
+            if (fp == null)
+            {
+                _context.Fifteens.Add(new FifteenPuzzle() { UserId = userId });
+                await _context.SaveChangesAsync();
+                fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == _userManager.GetUserId(User));
+            }
+            fp.Heuristic = heuristic;
+            fp.Dimensions = dimensions;
+            fp.TreeHeight = treeHeight;
+            fp.UserSolution = null;
+            fp.Solution = null;
+            fp.IsSolved = false;
+            ANode aNode = new ANode(dimensions);
+            FifteenPuzzleService.ShuffleState(aNode);
+            var (_, listInner) = FifteenPuzzleService.GenerateTree(aNode, treeHeight);
+
+            fp.Problem = aNode.State.ToJson();
+            _context.Fifteens.Update(fp);
+            return true;
+        }
+
+        [Authorize(Roles = "Administrator"), HttpPost("FifteenPuzzle/Users/Assign")]
+        public async Task<ActionResult> PostFPTestAssign(string[] userIds, int dimensions, int treeHeight, int heuristic)
+        {
+            foreach (var userId in userIds)
+            {
+                await _assignTask(userId, heuristic, dimensions, treeHeight);
+            }
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [Authorize(Roles = "Administrator"), HttpPost("FifteenPuzzle/Users/{userId}/Assign")]
+        public async Task<ActionResult> PostFPTestAssign(string userId, int dimensions, int treeHeight, int heuristic)
+        {
+            if (await _assignTask(userId, heuristic, dimensions, treeHeight))
+            {
+                return Ok();
+            }
+            return NotFound();
+        }
+
+        [Authorize(Roles = "Administrator"), HttpPost("FifteenPuzzle/Groups/{groupId}/Assign")]
+        public async Task<ActionResult> PostFPTestAssign(int groupId, int dimensions, int treeHeight, int heuristic)
+        {
+            var userIds = await _context.UserGroups.Include(ug => ug.User).Where(ug => ug.GroupId == groupId).Select(ug => ug.UserId).ToArrayAsync();
+            foreach (var userId in userIds)
+            {
+                await _assignTask(userId, heuristic, dimensions, treeHeight);
+            }
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
         [Authorize(Roles = "Administrator"), HttpGet("FifteenPuzzle/Users/")]
         public ActionResult<FifteenPuzzle[]?> GetUsers()
         {
-            var fp = _context.Fifteens.Where(f => f.User.Email != "admin@admin.com").ToArray();
+            var fp = _context.Fifteens.Where(f => f.User.UserName != "admin").ToArray();
             return fp;
         }
 
@@ -173,14 +226,8 @@ namespace AICourseTester.Controllers
         [Authorize(Roles = "Administrator"), HttpDelete("FifteenPuzzle/Users/{userId}")]
         public async Task<ActionResult> DeleteFPTest(string userId)
         {
-            var fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == userId);
-            if (fp == null) { return NotFound(); }
-            fp.Problem = null;
-            fp.Solution = null;
-            fp.UserSolution = null;
-            fp.IsSolved = false;
-            _context.Fifteens.Update(fp);
-            _context.SaveChanges();
+            await _context.Fifteens.Where(f => f.UserId == userId).ExecuteDeleteAsync();
+            await _context.SaveChangesAsync();
             return Ok();
         }
     }
