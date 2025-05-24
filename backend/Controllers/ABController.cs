@@ -123,6 +123,7 @@ namespace AICourseTester.Controllers
             ab.UserSolution = null;
             ab.Solution = null;
             ab.IsSolved = false;
+            ab.Date = DateTime.Now;
 
             var problemInner = AlphaBetaService.GenerateTree(ab.TreeHeight);
             ab.Problem = problemInner.ToJson();
@@ -146,6 +147,7 @@ namespace AICourseTester.Controllers
         {
             if (await _assignTask(userId, treeHeight))
             {
+                await _context.SaveChangesAsync();
                 return Ok();
             }
             return NotFound();
@@ -205,6 +207,7 @@ namespace AICourseTester.Controllers
             ab.Problem = null;
             ab.Solution = null;
             ab.IsSolved = false;
+            ab.Date = DateTime.Now;
             if (generate == true)
             {
                 var tree = AlphaBetaService.GenerateTree(ab.TreeHeight);

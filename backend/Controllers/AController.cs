@@ -118,6 +118,7 @@ namespace AICourseTester.Controllers
             fp.UserSolution = null;
             fp.Solution = null;
             fp.IsSolved = false;
+            fp.Date = DateTime.Now;
             ANode aNode = new ANode(dimensions);
             FifteenPuzzleService.ShuffleState(aNode);
             var (_, listInner) = FifteenPuzzleService.GenerateTree(aNode, treeHeight);
@@ -143,6 +144,7 @@ namespace AICourseTester.Controllers
         {
             if (await _assignTask(userId, heuristic, dimensions, treeHeight))
             {
+                await _context.SaveChangesAsync();
                 return Ok();
             }
             return NotFound();
@@ -207,6 +209,7 @@ namespace AICourseTester.Controllers
             fp.Problem = null;
             fp.Solution = null;
             fp.IsSolved = false;
+            fp.Date = DateTime.Now;
             if (State != null)
             {
                 fp.Problem = State.ToJson();
