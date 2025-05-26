@@ -98,15 +98,23 @@ using (var scope = app.Services.CreateScope())
     {
         userName = "admin";
     }
-    
-    if (await userManager.FindByNameAsync(userName) == null)
+    var password = ((string?[])[builder.Configuration["Admin:Password"], builder.Configuration["Admin:Pw"]]).FirstOrDefault(pw => pw != null);
+    if (password == null)
     {
-        var password = ((string?[])[builder.Configuration["Admin:Password"], builder.Configuration["Admin:Pw"]]).FirstOrDefault(pw => pw != null);
-        if (password == null)
-        {
-            throw new Exception("Provide password for admin - secrets.json / appsettings.json:\n\t\"Admin\": { {\"Password\" | \"Pw\"}: \"<password>\"[, \"UserName\": \"<username>\"] }");
-        }
+        throw new Exception("Provide password for admin - secrets.json / appsettings.json:\n\t\"Admin\": { {\"Password\" | \"Pw\"}: \"<password>\"[, \"UserName\": \"<username>\"] }");
+    }
 
+    ApplicationUser? user = await userManager.FindByNameAsync(userName);
+    if (user != null)
+    {
+        if (!await userManager.CheckPasswordAsync(user, password))
+        {
+            await userManager.RemovePasswordAsync(user);
+            await userManager.AddPasswordAsync(user, password);
+        }
+    }
+    else
+    {
         var ctx = scope.ServiceProvider.GetRequiredService<MainDbContext>();
         var role = await ctx.Roles.Where(r => r.Name == "Administrator").FirstAsync();
         var prevAdmin = await ctx.UserRoles.FirstOrDefaultAsync(u => u.RoleId == role.Id);
@@ -116,11 +124,12 @@ using (var scope = app.Services.CreateScope())
             await ctx.SaveChangesAsync();
         }
         
-        var user = new ApplicationUser();
+        user = new ApplicationUser();
         await userStore.SetUserNameAsync(user, userName, CancellationToken.None);
         await userManager.CreateAsync(user, password);
         await userManager.AddToRoleAsync(user, "Administrator");
     }
+    
 }
 
 app.Run();
