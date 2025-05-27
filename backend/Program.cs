@@ -110,6 +110,8 @@ using (var scope = app.Services.CreateScope())
 
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     var userStore = scope.ServiceProvider.GetRequiredService<IUserStore<ApplicationUser>>();
+    var ctx = scope.ServiceProvider.GetRequiredService<MainDbContext>();
+
     string? userName = builder.Configuration["Admin:UserName"];
     if (userName == null)
     {
@@ -136,7 +138,6 @@ using (var scope = app.Services.CreateScope())
     }
     else
     {
-        var ctx = scope.ServiceProvider.GetRequiredService<MainDbContext>();
         var role = await ctx.Roles.Where(r => r.Name == "Administrator").FirstAsync();
         var prevAdmin = await ctx.UserRoles.FirstOrDefaultAsync(u => u.RoleId == role.Id);
         if (prevAdmin != null)
@@ -150,7 +151,11 @@ using (var scope = app.Services.CreateScope())
         await userManager.CreateAsync(user, password);
         await userManager.AddToRoleAsync(user, "Administrator");
     }
-    
+    if (user.Name != "admin")
+    {
+        user.Name = "admin";
+        await ctx.SaveChangesAsync();
+    }
 }
 
 app.Run();
