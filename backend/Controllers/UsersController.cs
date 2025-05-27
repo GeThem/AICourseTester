@@ -62,14 +62,14 @@ namespace AICourseTester.Controllers
         }
 
         [Authorize(Roles = "Administrator"), HttpPut("{userId}")]
-        public async Task<ActionResult> UpdateUser(string? userName, string? password, int? groupId, string? name, string? secondName, string? patronymic, string userId)
+        public async Task<ActionResult<IdentityResult>> UpdateUser(string? userName, string? password, int? groupId, string? name, string? secondName, string? patronymic, string userId)
         {
             var user = await _context.Users.FirstOrDefaultAsync(f => f.Id == userId);
             if (user == null)
             {
                 return NotFound();
             }
-            if (groupId != null)
+            if (groupId != null && await _context.Groups.FirstOrDefaultAsync(g => g.Id == groupId) != null)
             {
                 _context.UserGroups.Add(new UserGroups { UserId = userId, GroupId = (int)groupId });
             }
@@ -85,17 +85,24 @@ namespace AICourseTester.Controllers
             {
                 user.Patronymic = patronymic;
             }
+            await _context.SaveChangesAsync();
             if (userName != null)
             {
-                await _userStore.SetUserNameAsync(user, userName, CancellationToken.None);
+                var result = await _userManager.SetUserNameAsync(user, userName);
+                if (!result.Succeeded)
+                {
+                    return result;
+                }
             }
             if (password != null)
-            { 
-                await _userManager.RemovePasswordAsync(user);
-                await _userManager.AddPasswordAsync(user, password);
+            {
+                string resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+                IdentityResult result = await _userManager.ResetPasswordAsync(user, resetToken, password);
+                if (!result.Succeeded)
+                {
+                    return result;
+                }
             }
-
-            await _context.SaveChangesAsync();
             return Ok();
         }
 
