@@ -111,6 +111,25 @@ namespace AICourseTester.Controllers
             return group;
         }
 
+        [Authorize(Roles = "Administrator"), HttpPut("Groups/{id}")]
+        public async Task<ActionResult> ChangeGroup(int id, string[] userIds)
+        {
+            if (await _context.Groups.FirstOrDefaultAsync(g => g.Id == id) == null)
+            {
+                return NotFound();
+            }
+            foreach (var userId in userIds)
+            {
+                if (await _context.Users.FirstOrDefaultAsync(u => u.Id == userId) == null)
+                {
+                    continue;
+                }
+                _context.UserGroups.Add(new UserGroups { UserId = userId, GroupId = id });
+            }
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
         [Authorize(Roles = "Administrator"), HttpPost("Groups")]
         public async Task<ActionResult> AddGroup(string groupName)
         {
