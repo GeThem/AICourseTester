@@ -23,12 +23,14 @@ namespace AICourseTester.Controllers
     public class UsersController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IUserStore<ApplicationUser> _userStore;
         private readonly MainDbContext _context;
 
-        public UsersController(MainDbContext context, UserManager<ApplicationUser> userManager)
+        public UsersController(MainDbContext context, UserManager<ApplicationUser> userManager, IUserStore<ApplicationUser> userStore)
         {
             _userManager = userManager;
             _context = context;
+            _userStore = userStore;
         }
 
         private static ValidationProblem CreateValidationProblem(IdentityResult result)
@@ -60,7 +62,7 @@ namespace AICourseTester.Controllers
         }
 
         [Authorize(Roles = "Administrator"), HttpPut("{userId}")]
-        public async Task<ActionResult> UpdateUser(int? groupId, string? name, string? secondName, string? patronymic, string userId)
+        public async Task<ActionResult> UpdateUser(string? userName, string? password, int? groupId, string? name, string? secondName, string? patronymic, string userId)
         {
             var user = await _context.Users.FirstOrDefaultAsync(f => f.Id == userId);
             if (user == null)
@@ -83,6 +85,16 @@ namespace AICourseTester.Controllers
             {
                 user.Patronymic = patronymic;
             }
+            if (userName != null)
+            {
+                await _userStore.SetUserNameAsync(user, userName, CancellationToken.None);
+            }
+            if (password != null)
+            { 
+                await _userManager.RemovePasswordAsync(user);
+                await _userManager.AddPasswordAsync(user, password);
+            }
+
             await _context.SaveChangesAsync();
             return Ok();
         }
