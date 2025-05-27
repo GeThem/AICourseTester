@@ -1,20 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.CodeAnalysis;
-using Microsoft.AspNetCore.Http.HttpResults;
-using System.Diagnostics;
-using Microsoft.AspNetCore.Authentication.BearerToken;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Identity.UI.V4.Pages.Account.Internal;
-using AICourseTester.Data;
+﻿using AICourseTester.Data;
 using AICourseTester.Models;
-using Microsoft.Extensions.Configuration.UserSecrets;
+using Microsoft.AspNetCore.Authentication.BearerToken;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.CodeAnalysis;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Net.WebSockets;
-using NuGet.Packaging.Signing;
+using System.Diagnostics;
 
 namespace AICourseTester.Controllers
 {
@@ -294,6 +289,7 @@ namespace AICourseTester.Controllers
             return TypedResults.Ok();
         }
 
+        [EnableRateLimiting("token")]
         [HttpPost("Login")]
         public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> LoginUser(LogReq login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies, [FromServices] IServiceProvider sp)
         {

@@ -9,11 +9,13 @@ using AICourseTester.Data;
 using AICourseTester.Models;
 using AICourseTester.Services;
 using NuGet.Packaging.Signing;
+using Microsoft.AspNetCore.RateLimiting;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace AICourseTester.Controllers
 {
+    [EnableRateLimiting("token")]
     [Route("api/[controller]")]
     [ApiController]
     public class AController : ControllerBase
@@ -128,6 +130,7 @@ namespace AICourseTester.Controllers
             return true;
         }
 
+        [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpPost("FifteenPuzzle/Users/Assign")]
         public async Task<ActionResult> PostFPTestAssign(string[] userIds, int dimensions, int treeHeight, int heuristic)
         {
@@ -139,6 +142,7 @@ namespace AICourseTester.Controllers
             return Ok();
         }
 
+        [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpPost("FifteenPuzzle/Users/{userId}/Assign")]
         public async Task<ActionResult> PostFPTestAssign(string userId, int dimensions, int treeHeight, int heuristic)
         {
@@ -150,6 +154,7 @@ namespace AICourseTester.Controllers
             return NotFound();
         }
 
+        [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpPost("FifteenPuzzle/Groups/{groupId}/Assign")]
         public async Task<ActionResult> PostFPTestAssign(int groupId, int dimensions, int treeHeight, int heuristic)
         {
@@ -162,6 +167,7 @@ namespace AICourseTester.Controllers
             return Ok();
         }
 
+        [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpGet("FifteenPuzzle/Users/")]
         public ActionResult<FifteenPuzzle[]?> GetUsers()
         {
@@ -169,6 +175,7 @@ namespace AICourseTester.Controllers
             return fp;
         }
 
+        [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpGet("FifteenPuzzle/Users/{userId}/")]
         public ActionResult<FifteenPuzzleResponse> GetUser(string userId)
         {
@@ -181,6 +188,7 @@ namespace AICourseTester.Controllers
             return NotFound();
         }
 
+        [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpPut("FifteenPuzzle/Users/{userId}/")]
         public async Task<ActionResult> UpdateFPTest(int[][]? State, string userId, [System.Web.Http.FromUri] int? height = null, [System.Web.Http.FromUri] int? dimensions = null, [System.Web.Http.FromUri] bool generate = false)
         {
@@ -226,6 +234,7 @@ namespace AICourseTester.Controllers
             return Ok();
         }
 
+        [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpDelete("FifteenPuzzle/Users/{userId}")]
         public async Task<ActionResult> DeleteFPTest(string userId)
         {

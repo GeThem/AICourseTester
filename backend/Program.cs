@@ -1,9 +1,9 @@
 using AICourseTester.Data;
 using AICourseTester.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.Net;
+using Microsoft.Extensions.Options;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -60,19 +60,19 @@ builder.Services.Configure<IdentityOptions>(options =>
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._+!@#$%^&*";
 });
 
-builder.Services.AddRateLimiter(options =>
-{
-    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.User.Identity?.Name ?? httpContext.Request.Headers.Host.ToString(),
-            factory: partition => new FixedWindowRateLimiterOptions
-            {
-                AutoReplenishment = true,
-                PermitLimit = 10,
-                QueueLimit = 0,
-                Window = TimeSpan.FromMinutes(1)
-            }));
-});
+
+var tokenPolicy = "token";
+
+builder.Services.AddRateLimiter(_ => _
+    .AddTokenBucketLimiter(policyName: tokenPolicy, options =>
+    {
+        options.TokenLimit = 50;
+        options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        options.QueueLimit = 0;
+        options.ReplenishmentPeriod = TimeSpan.FromSeconds(20);
+        options.TokensPerPeriod = 20;
+        options.AutoReplenishment = true;
+    }).RejectionStatusCode = StatusCodes.Status429TooManyRequests);
 
 
 var app = builder.Build();
@@ -95,6 +95,8 @@ app.UseCors(MyAllowSpecificOrigins);
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseRateLimiter();
 
 using (var scope = app.Services.CreateScope())
 {

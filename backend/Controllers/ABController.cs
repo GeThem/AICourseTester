@@ -6,11 +6,13 @@ using Microsoft.EntityFrameworkCore;
 using AICourseTester.Data;
 using AICourseTester.Models;
 using AICourseTester.Services;
+using Microsoft.AspNetCore.RateLimiting;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace AICourseTester.Controllers
 {
+    [EnableRateLimiting("token")]
     [Route("api/[controller]")]
     [ApiController]
     public class ABController : ControllerBase
@@ -131,6 +133,7 @@ namespace AICourseTester.Controllers
             return true;
         }
 
+        [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpPost("Users/Assign")]
         public async Task<ActionResult> PostFPTestAssign(string[] userIds, int treeHeight)
         {
@@ -142,6 +145,7 @@ namespace AICourseTester.Controllers
             return Ok();
         }
 
+        [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpPost("Users/{userId}/Assign")]
         public async Task<ActionResult> PostFPTestAssign(string userId, int treeHeight)
         {
@@ -153,6 +157,7 @@ namespace AICourseTester.Controllers
             return NotFound();
         }
 
+        [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpPost("Groups/{groupId}/Assign")]
         public async Task<ActionResult> PostFPTestAssign(int groupId, int treeHeight)
         {
@@ -165,6 +170,7 @@ namespace AICourseTester.Controllers
             return Ok();
         }
 
+        [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpGet("Users/")]
         public ActionResult<AlphaBeta[]?> GetUsers()
         {
@@ -172,6 +178,7 @@ namespace AICourseTester.Controllers
             return ab;
         }
 
+        [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpGet("Users/{userId}/")]
         public ActionResult<AlphaBetaResponse> GetUser(string userId)
         {
@@ -183,6 +190,7 @@ namespace AICourseTester.Controllers
             return NotFound();
         }
 
+        [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpPut("Users/{userId}/")]
         public async Task<ActionResult> UpdateABTest(string userId, [System.Web.Http.FromUri] int? height = null, [System.Web.Http.FromUri] bool generate = false)
         {
@@ -218,6 +226,7 @@ namespace AICourseTester.Controllers
             return Ok();
         }
 
+        [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpDelete("Users/{userId}")]
         public async Task<ActionResult> DeleteABTest(string userId)
         {
