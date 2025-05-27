@@ -57,42 +57,42 @@ namespace AICourseTester.Controllers
         }
 
         [Authorize(Roles = "Administrator"), HttpPut("{userId}")]
-        public async Task<ActionResult<IdentityResult>> UpdateUser(string? userName, string? password, int? groupId, string? name, string? secondName, string? patronymic, string userId)
+        public async Task<ActionResult<IdentityResult>> UpdateUser(RegReq reg, string userId)
         {
             var user = await _context.Users.FirstOrDefaultAsync(f => f.Id == userId);
             if (user == null)
             {
                 return NotFound();
             }
-            if (groupId != null && await _context.Groups.FirstOrDefaultAsync(g => g.Id == groupId) != null)
+            if (reg.GroupId != null && await _context.Groups.FirstOrDefaultAsync(g => g.Id == reg.GroupId) != null)
             {
-                _context.UserGroups.Add(new UserGroups { UserId = userId, GroupId = (int)groupId });
+                _context.UserGroups.Add(new UserGroups { UserId = userId, GroupId = (int)reg.GroupId });
             }
-            if (name != null)
+            if (reg.Name != null)
             {
-                user.Name = name;
+                user.Name = reg.Name;
             }
-            if (secondName != null)
+            if (reg.SecondName != null)
             {
-                user.SecondName = secondName;
+                user.SecondName = reg.SecondName;
             }
-            if (patronymic != null)
+            if (reg.Patronymic != null)
             {
-                user.Patronymic = patronymic;
+                user.Patronymic = reg.Patronymic;
             }
             await _context.SaveChangesAsync();
-            if (userName != null)
+            if (reg.UserName != null)
             {
-                var result = await _userManager.SetUserNameAsync(user, userName);
+                var result = await _userManager.SetUserNameAsync(user, reg.UserName);
                 if (!result.Succeeded)
                 {
                     return result;
                 }
             }
-            if (password != null)
+            if (reg.Password != null)
             {
                 string resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-                IdentityResult result = await _userManager.ResetPasswordAsync(user, resetToken, password);
+                IdentityResult result = await _userManager.ResetPasswordAsync(user, resetToken, reg.Password);
                 if (!result.Succeeded)
                 {
                     return result;
