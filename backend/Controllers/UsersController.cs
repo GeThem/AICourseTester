@@ -13,6 +13,8 @@ using AICourseTester.Data;
 using AICourseTester.Models;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using Microsoft.IdentityModel.Tokens;
+using System.Net.WebSockets;
+using NuGet.Packaging.Signing;
 
 namespace AICourseTester.Controllers
 {
@@ -117,6 +119,21 @@ namespace AICourseTester.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Administrator"), HttpDelete("Groups")]
+        public async Task<ActionResult> DeleteGroup([System.Web.Http.FromUri] int? id, int[]? ids)
+        {
+            if (ids != null)
+            {
+                foreach (var groupId in ids)
+                {
+                    await _context.Groups.Where(g => g.Id == groupId).ExecuteDeleteAsync();
+                }
+            }
+            await _context.Groups.Where(g => g.Id == id).ExecuteDeleteAsync();
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
         public class UserData
         {
             public required string Id { get; set; }
@@ -148,6 +165,41 @@ namespace AICourseTester.Controllers
                 Patronymic = user.Patronymic,
                 Group = await GetGroup(user.Id)
             };
+        }
+
+        [Authorize(Roles = "Administrator"), HttpDelete()]
+        public async Task<ActionResult> DeleteUser([System.Web.Http.FromUri] string? userId, [System.Web.Http.FromUri] int? groupId, string[]? userIds)
+        {
+            if (groupId != null)
+            {
+                if (await _context.Groups.FirstOrDefaultAsync(g => g.Id == groupId) == null)
+                {
+                    return NotFound();
+                }
+                var ids = await _context.UserGroups.Where(g => g.GroupId == groupId).Select(ug => ug.UserId).ToArrayAsync();
+                foreach (var id in ids)
+                {
+                    await _context.Users.Where(u => u.Id == id).ExecuteDeleteAsync();
+                }
+            }
+            if (userId != null)
+            {
+                var user = await _context.Users.FirstOrDefaultAsync(f => f.Id == userId);
+                if (user == null)
+                {
+                    return NotFound();
+                }
+                _context.Users.Remove(user);
+            }
+            if (userIds != null)
+            {
+                foreach (var id in userIds)
+                {
+                    await _context.Users.Where(u => u.Id == id).ExecuteDeleteAsync();
+                }
+            }
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
         [Authorize(Roles = "Administrator"), HttpGet]
