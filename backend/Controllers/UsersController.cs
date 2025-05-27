@@ -210,24 +210,22 @@ namespace AICourseTester.Controllers
         {
             if (groupId != null)
             {
-                if (await _context.Groups.FirstOrDefaultAsync(g => g.Id == groupId) == null)
+                if (await _context.Groups.FirstOrDefaultAsync(g => g.Id == groupId) != null)
                 {
-                    return NotFound();
-                }
-                var ids = await _context.UserGroups.Where(g => g.GroupId == groupId).Select(ug => ug.UserId).ToArrayAsync();
-                foreach (var id in ids)
-                {
-                    await _context.Users.Where(u => u.Id == id).ExecuteDeleteAsync();
+                    var ids = await _context.UserGroups.Where(g => g.GroupId == groupId).Select(ug => ug.UserId).ToArrayAsync();
+                    foreach (var id in ids)
+                    {
+                        await _context.Users.Where(u => u.Id == id).ExecuteDeleteAsync();
+                    }
                 }
             }
             if (userId != null)
             {
                 var user = await _context.Users.FirstOrDefaultAsync(f => f.Id == userId);
-                if (user == null)
+                if (user != null)
                 {
-                    return NotFound();
+                    _context.Users.Remove(user);
                 }
-                _context.Users.Remove(user);
             }
             if (userIds != null)
             {
