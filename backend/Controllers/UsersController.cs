@@ -240,12 +240,12 @@ namespace AICourseTester.Controllers
         [Authorize(Roles = "Administrator"), HttpGet]
         public async Task<ActionResult<UserData[]>> GetUsers()
         {
-            var users = await UserLeftJoinGroup().ToArrayAsync();
-            if (users == null)
+            var users = UserLeftJoinGroup();
+            if (users.IsNullOrEmpty())
             {
                 return NotFound();
             }
-            return users;
+            return await users.ToArrayAsync();
         }
 
         [Authorize(Roles = "Administrator"), HttpPost("Register")]
