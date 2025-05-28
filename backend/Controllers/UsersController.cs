@@ -18,42 +18,60 @@ namespace AICourseTester.Controllers
     public class UsersController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IUserStore<ApplicationUser> _userStore;
         private readonly MainDbContext _context;
 
-        public UsersController(MainDbContext context, UserManager<ApplicationUser> userManager, IUserStore<ApplicationUser> userStore)
+        public UsersController(MainDbContext context, UserManager<ApplicationUser> userManager)
         {
             _userManager = userManager;
             _context = context;
-            _userStore = userStore;
         }
 
-        private static ValidationProblem CreateValidationProblem(IdentityResult result)
+        public class UserData
         {
-            // We expect a single error code and description in the normal case.
-            // This could be golfed with GroupBy and ToDictionary, but perf! :P
-            Debug.Assert(!result.Succeeded);
-            var errorDictionary = new Dictionary<string, string[]>(1);
+            public required string Id { get; set; }
+            public string? Name { get; set; }
+            public string? SecondName { get; set; }
+            public string? Patronymic { get; set; }
+            public string? Group { get; set; }
+        }
 
-            foreach (var error in result.Errors)
+        private IQueryable<UserData> UserLeftJoinGroup()
+        {
+            var result = _context.Users
+                .GroupJoin(_context.UserGroups, u => u.Id, g => g.UserId, (u, g) => new { u, g })
+                .SelectMany(ug => ug.g.DefaultIfEmpty(), (u, g) => new { u.u.Id, u.u.Name, u.u.SecondName, u.u.Patronymic, g.GroupId })
+                .GroupJoin(_context.Groups, u => u.GroupId, g => g.Id, (u, g) => new { u, g })
+                .SelectMany(ug => ug.g.DefaultIfEmpty(), (u, g) => new UserData
+                {
+                    Id = u.u.Id,
+                    Name = u.u.Name,
+                    SecondName = u.u.SecondName,
+                    Patronymic = u.u.Patronymic,
+                    Group = g.Name
+                });
+            return result;
+        }
+
+        [Authorize(Roles = "Administrator"), HttpGet]
+        public async Task<ActionResult<UserData[]>> GetUsers()
+        {
+            var users = UserLeftJoinGroup();
+            if (users.IsNullOrEmpty())
             {
-                string[] newDescriptions;
-
-                if (errorDictionary.TryGetValue(error.Code, out var descriptions))
-                {
-                    newDescriptions = new string[descriptions.Length + 1];
-                    Array.Copy(descriptions, newDescriptions, descriptions.Length);
-                    newDescriptions[descriptions.Length] = error.Description;
-                }
-                else
-                {
-                    newDescriptions = [error.Description];
-                }
-
-                errorDictionary[error.Code] = newDescriptions;
+                return NotFound();
             }
+            return await users.ToArrayAsync();
+        }
 
-            return TypedResults.ValidationProblem(errorDictionary);
+        [Authorize(Roles = "Administrator"), HttpGet("{userId}")]
+        public async Task<ActionResult<UserData?>> GetUser(string userId)
+        {
+            var user = await UserLeftJoinGroup().FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            return user;
         }
 
         [Authorize(Roles = "Administrator"), HttpPut("{userId}")]
@@ -101,109 +119,6 @@ namespace AICourseTester.Controllers
             return Ok();
         }
 
-        [Authorize(Roles = "Administrator"), HttpGet("Groups")]
-        public async Task<ActionResult<Group[]>> GetGroups()
-        {
-            return await _context.Groups.ToArrayAsync();
-        }
-
-        [Authorize(Roles = "Administrator"), HttpGet("Groups/{id}/")]
-        public async Task<ActionResult<UserData[]>> GetGroup(int id)
-        {
-            var group = await _context.UserGroups.Where(g => g.GroupId == id).Select(g => new UserData
-            {
-                Id = g.User.Id,
-                Name = g.User.Name,
-                SecondName = g.User.SecondName,
-                Patronymic = g.User.Patronymic,
-                Group = g.Group.Name
-            }).ToArrayAsync();
-            if (group.IsNullOrEmpty()) 
-            {
-                return NotFound();
-            }
-            return group;
-        }
-
-        [Authorize(Roles = "Administrator"), HttpPut("Groups/{id}")]
-        public async Task<ActionResult> ChangeGroup(int id, string[] userIds)
-        {
-            if (await _context.Groups.FirstOrDefaultAsync(g => g.Id == id) == null)
-            {
-                return NotFound();
-            }
-            foreach (var userId in userIds)
-            {
-                if (await _context.Users.FirstOrDefaultAsync(u => u.Id == userId) == null)
-                {
-                    continue;
-                }
-                _context.UserGroups.Add(new UserGroups { UserId = userId, GroupId = id });
-            }
-            await _context.SaveChangesAsync();
-            return Ok();
-        }
-
-        [Authorize(Roles = "Administrator"), HttpPost("Groups")]
-        public async Task<ActionResult> AddGroup(string groupName)
-        {
-            _context.Groups.Add(new Group { Name = groupName });
-            await _context.SaveChangesAsync();
-            return Ok();
-        }
-
-        [Authorize(Roles = "Administrator"), HttpDelete("Groups")]
-        public async Task<ActionResult> DeleteGroup([System.Web.Http.FromUri] int? id, int[]? ids)
-        {
-            if (ids != null)
-            {
-                foreach (var groupId in ids)
-                {
-                    await _context.Groups.Where(g => g.Id == groupId).ExecuteDeleteAsync();
-                }
-            }
-            await _context.Groups.Where(g => g.Id == id).ExecuteDeleteAsync();
-            await _context.SaveChangesAsync();
-            return Ok();
-        }
-
-        public class UserData
-        {
-            public required string Id { get; set; }
-            public string? Name { get; set; }
-            public string? SecondName { get; set; }
-            public string? Patronymic { get; set; }
-            public string? Group { get; set; }
-        }
-
-        private IQueryable<UserData> UserLeftJoinGroup()
-        {
-            var result = _context.Users
-                .GroupJoin(_context.UserGroups, u => u.Id, g => g.UserId, (u, g) => new { u, g })
-                .SelectMany(ug => ug.g.DefaultIfEmpty(), (u, g) => new { u.u.Id, u.u.Name, u.u.SecondName, u.u.Patronymic, g.GroupId })
-                .GroupJoin(_context.Groups, u => u.GroupId, g => g.Id, (u, g) => new { u, g })
-                .SelectMany(ug => ug.g.DefaultIfEmpty(), (u, g) => new UserData
-                {
-                    Id = u.u.Id,
-                    Name = u.u.Name,
-                    SecondName = u.u.SecondName,
-                    Patronymic = u.u.Patronymic,
-                    Group = g.Name
-                });
-            return result;
-        }
-
-        [Authorize(Roles = "Administrator"), HttpGet("{userId}")]
-        public async Task<ActionResult<UserData?>> GetUser(string userId)
-        {
-            var user = await UserLeftJoinGroup().FirstOrDefaultAsync(u => u.Id == userId);
-            if (user == null)
-            {
-                return NotFound();
-            }
-            return user;
-        }
-
         [Authorize(Roles = "Administrator"), HttpDelete()]
         public async Task<ActionResult> DeleteUser([System.Web.Http.FromUri] string? userId, [System.Web.Http.FromUri] int? groupId, string[]? userIds)
         {
@@ -237,15 +152,98 @@ namespace AICourseTester.Controllers
             return Ok();
         }
 
-        [Authorize(Roles = "Administrator"), HttpGet]
-        public async Task<ActionResult<UserData[]>> GetUsers()
+        [Authorize(Roles = "Administrator"), HttpGet("Groups")]
+        public async Task<ActionResult<Group[]>> GetGroups()
         {
-            var users = UserLeftJoinGroup();
-            if (users.IsNullOrEmpty())
+            return await _context.Groups.ToArrayAsync();
+        }
+
+        [Authorize(Roles = "Administrator"), HttpGet("Groups/{id}/")]
+        public async Task<ActionResult<UserData[]>> GetGroup(int id)
+        {
+            var group = await _context.UserGroups.Where(g => g.GroupId == id).Select(g => new UserData
+            {
+                Id = g.User.Id,
+                Name = g.User.Name,
+                SecondName = g.User.SecondName,
+                Patronymic = g.User.Patronymic,
+                Group = g.Group.Name
+            }).ToArrayAsync();
+            if (group.IsNullOrEmpty())
             {
                 return NotFound();
             }
-            return await users.ToArrayAsync();
+            return group;
+        }
+
+        [Authorize(Roles = "Administrator"), HttpPost("Groups")]
+        public async Task<ActionResult> AddGroup(string groupName)
+        {
+            _context.Groups.Add(new Group { Name = groupName });
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [Authorize(Roles = "Administrator"), HttpPut("Groups/{id}")]
+        public async Task<ActionResult> ChangeGroup(int id, string[] userIds)
+        {
+            if (await _context.Groups.FirstOrDefaultAsync(g => g.Id == id) == null)
+            {
+                return NotFound();
+            }
+            foreach (var userId in userIds)
+            {
+                if (await _context.Users.FirstOrDefaultAsync(u => u.Id == userId) == null)
+                {
+                    continue;
+                }
+                _context.UserGroups.Add(new UserGroups { UserId = userId, GroupId = id });
+            }
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [Authorize(Roles = "Administrator"), HttpDelete("Groups")]
+        public async Task<ActionResult> DeleteGroup([System.Web.Http.FromUri] int? id, int[]? ids)
+        {
+            if (ids != null)
+            {
+                foreach (var groupId in ids)
+                {
+                    await _context.Groups.Where(g => g.Id == groupId).ExecuteDeleteAsync();
+                }
+            }
+            await _context.Groups.Where(g => g.Id == id).ExecuteDeleteAsync();
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+        
+        private static ValidationProblem CreateValidationProblem(IdentityResult result)
+        {
+            // We expect a single error code and description in the normal case.
+            // This could be golfed with GroupBy and ToDictionary, but perf! :P
+            Debug.Assert(!result.Succeeded);
+            var errorDictionary = new Dictionary<string, string[]>(1);
+
+            foreach (var error in result.Errors)
+            {
+                string[] newDescriptions;
+
+                if (errorDictionary.TryGetValue(error.Code, out var descriptions))
+                {
+                    newDescriptions = new string[descriptions.Length + 1];
+                    Array.Copy(descriptions, newDescriptions, descriptions.Length);
+                    newDescriptions[descriptions.Length] = error.Description;
+                }
+                else
+                {
+                    newDescriptions = [error.Description];
+                }
+
+                errorDictionary[error.Code] = newDescriptions;
+            }
+
+            return TypedResults.ValidationProblem(errorDictionary);
         }
 
         [Authorize(Roles = "Administrator"), HttpPost("Register")]
