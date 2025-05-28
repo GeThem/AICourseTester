@@ -176,28 +176,32 @@ namespace AICourseTester.Controllers
             public string? Group { get; set; }
         }
 
-        private async Task<string?> GetGroup(string id)
+        private IQueryable<UserData> UserLeftJoinGroup()
         {
-            var result = await _context.UserGroups.Include(g => g.Group).FirstOrDefaultAsync(ug => ug.UserId == id);
-            return result?.Group.Name;
+            var result = _context.Users
+                .GroupJoin(_context.UserGroups, u => u.Id, g => g.UserId, (u, g) => new { u, g })
+                .SelectMany(ug => ug.g.DefaultIfEmpty(), (u, g) => new { u.u.Id, u.u.Name, u.u.SecondName, u.u.Patronymic, g.GroupId })
+                .GroupJoin(_context.Groups, u => u.GroupId, g => g.Id, (u, g) => new { u, g })
+                .SelectMany(ug => ug.g.DefaultIfEmpty(), (u, g) => new UserData
+                {
+                    Id = u.u.Id,
+                    Name = u.u.Name,
+                    SecondName = u.u.SecondName,
+                    Patronymic = u.u.Patronymic,
+                    Group = g.Name
+                });
+            return result;
         }
 
         [Authorize(Roles = "Administrator"), HttpGet("{userId}")]
         public async Task<ActionResult<UserData?>> GetUser(string userId)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(f => f.Id == userId);
+            var user = await UserLeftJoinGroup().FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
                 return NotFound();
             }
-            return new UserData
-            {
-                Id = user.Id,
-                Name = user.Name,
-                SecondName = user.SecondName,
-                Patronymic = user.Patronymic,
-                Group = await GetGroup(user.Id)
-            };
+            return user;
         }
 
         [Authorize(Roles = "Administrator"), HttpDelete()]
@@ -236,20 +240,10 @@ namespace AICourseTester.Controllers
         [Authorize(Roles = "Administrator"), HttpGet]
         public async Task<ActionResult<UserData[]>> GetUsers()
         {
-            var users = await _context.Users.Select(u => new UserData
-            {
-                Id = u.Id,
-                Name = u.Name,
-                SecondName = u.SecondName,
-                Patronymic = u.Patronymic,
-            }).ToArrayAsync();
+            var users = await UserLeftJoinGroup().ToArrayAsync();
             if (users == null)
             {
                 return NotFound();
-            }
-            foreach (var user in users)
-            {
-                user.Group = await GetGroup(user.Id);
             }
             return users;
         }
