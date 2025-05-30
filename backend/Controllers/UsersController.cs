@@ -1,4 +1,5 @@
 ﻿using AICourseTester.Data;
+using AICourseTester.DTO;
 using AICourseTester.Models;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
@@ -75,42 +76,47 @@ namespace AICourseTester.Controllers
         }
 
         [Authorize(Roles = "Administrator"), HttpPut("{userId}")]
-        public async Task<ActionResult<IdentityResult>> UpdateUser(RegReq reg, string userId)
+        public async Task<ActionResult<IdentityResult>> UpdateUser(UserModifyDTO userNewData, string userId)
         {
             var user = await _context.Users.FirstOrDefaultAsync(f => f.Id == userId);
             if (user == null)
             {
                 return NotFound();
             }
-            if (reg.GroupId != null && await _context.Groups.FirstOrDefaultAsync(g => g.Id == reg.GroupId) != null)
+            if (userNewData.RemoveGroup)
             {
-                _context.UserGroups.Add(new UserGroups { UserId = userId, GroupId = (int)reg.GroupId });
+                await _context.UserGroups.Where(ug => ug.UserId == userId).ExecuteDeleteAsync();
             }
-            if (reg.Name != null)
+            else if (userNewData.GroupId != null && await _context.Groups.FirstOrDefaultAsync(g => g.Id == userNewData.GroupId) != null)
             {
-                user.Name = reg.Name;
+                await _context.UserGroups.Where(ug => ug.UserId == userId).ExecuteDeleteAsync();
+                _context.UserGroups.Add(new UserGroups() { UserId = userId, GroupId = (int)userNewData.GroupId });
             }
-            if (reg.SecondName != null)
+            if (userNewData.Name != null)
             {
-                user.SecondName = reg.SecondName;
+                user.Name = userNewData.Name;
             }
-            if (reg.Patronymic != null)
+            if (userNewData.SecondName != null)
             {
-                user.Patronymic = reg.Patronymic;
+                user.SecondName = userNewData.SecondName;
+            }
+            if (userNewData.Patronymic != null)
+            {
+                user.Patronymic = userNewData.Patronymic;
             }
             await _context.SaveChangesAsync();
-            if (reg.UserName != null)
+            if (userNewData.UserName != null)
             {
-                var result = await _userManager.SetUserNameAsync(user, reg.UserName);
+                var result = await _userManager.SetUserNameAsync(user, userNewData.UserName);
                 if (!result.Succeeded)
                 {
                     return result;
                 }
             }
-            if (reg.Password != null)
+            if (userNewData.Password != null)
             {
                 string resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-                IdentityResult result = await _userManager.ResetPasswordAsync(user, resetToken, reg.Password);
+                IdentityResult result = await _userManager.ResetPasswordAsync(user, resetToken, userNewData.Password);
                 if (!result.Succeeded)
                 {
                     return result;
@@ -197,6 +203,7 @@ namespace AICourseTester.Controllers
                 {
                     continue;
                 }
+                await _context.UserGroups.Where(ug => ug.UserId == userId).ExecuteDeleteAsync();
                 _context.UserGroups.Add(new UserGroups { UserId = userId, GroupId = id });
             }
             await _context.SaveChangesAsync();
