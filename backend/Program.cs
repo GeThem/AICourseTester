@@ -38,11 +38,13 @@ builder.Services.AddDbContext<MainDbContext>(options =>
     .UseNpgsql(builder.Configuration.GetConnectionString("main_db"));
 });
 
-builder.Services.AddAuthorization();
-
-builder.Services.AddIdentityApiEndpoints<ApplicationUser>()
+builder.Services
+    .AddIdentityApiEndpoints<ApplicationUser>()
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<MainDbContext>();
+
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
 
 builder.Services.Configure<IdentityOptions>(options =>
 {
@@ -96,13 +98,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-//app.MapIdentityApi<ApplicationUser>();
+app.MapIdentityApi<ApplicationUser>();
 
 app.UseHttpsRedirection();
 
 app.UseCors(MyAllowSpecificOrigins);
 
-app.UseAuthorization();
+app.UseAuthentication();
+app.UseAuthorization(); 
 
 app.MapControllers();
 
