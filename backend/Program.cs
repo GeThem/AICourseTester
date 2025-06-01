@@ -67,17 +67,24 @@ builder.Services.Configure<IdentityOptions>(options =>
 
 var tokenPolicy = "token";
 
-builder.Services.AddRateLimiter(_ => _
-    .AddTokenBucketLimiter(policyName: tokenPolicy, options =>
-    {
-        options.TokenLimit = 50;
-        options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-        options.QueueLimit = 0;
-        options.ReplenishmentPeriod = TimeSpan.FromSeconds(20);
-        options.TokensPerPeriod = 20;
-        options.AutoReplenishment = true;
-    }).RejectionStatusCode = StatusCodes.Status429TooManyRequests);
-
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy(tokenPolicy, httpContext =>
+    RateLimitPartition.GetTokenBucketLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        //partitionKey: httpContext.User.Identity?.Name ?? "anonymous",
+        factory: _ => new TokenBucketRateLimiterOptions
+        {
+            TokenLimit = 50,
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            QueueLimit = 0,
+            ReplenishmentPeriod = TimeSpan.FromSeconds(20),
+            TokensPerPeriod = 20,
+            AutoReplenishment = true
+        })
+    );
+});
 
 var app = builder.Build();
 
