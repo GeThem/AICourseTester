@@ -5,10 +5,12 @@ using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Diagnostics;
 
@@ -19,12 +21,21 @@ namespace AICourseTester.Controllers
     public class UsersController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IUserStore<ApplicationUser> _userStore;
         private readonly MainDbContext _context;
+        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly IOptionsMonitor<BearerTokenOptions> _bearerTokenOptions;
+        private readonly TimeProvider _timeProvider;
 
-        public UsersController(MainDbContext context, UserManager<ApplicationUser> userManager)
+        public UsersController(MainDbContext context, UserManager<ApplicationUser> userManager, IUserStore<ApplicationUser> userStore,
+            SignInManager<ApplicationUser> signInManager, IOptionsMonitor<BearerTokenOptions> bearerTokenOptions, TimeProvider timeProvider)
         {
             _userManager = userManager;
+            _userStore = userStore;
             _context = context;
+            _signInManager = signInManager;
+            _bearerTokenOptions = bearerTokenOptions;
+            _timeProvider = timeProvider;
         }
 
         public class UserData
@@ -254,24 +265,21 @@ namespace AICourseTester.Controllers
         }
 
         [Authorize(Roles = "Administrator"), HttpPost("Register")]
-        public async Task<Results<Ok, ValidationProblem>> RegisterUser(RegReq registration, [FromServices] IServiceProvider sp)
+        public async Task<Results<Ok, ValidationProblem>> RegisterUser(RegReq registration)
         {
-            var userManager = sp.GetRequiredService<UserManager<ApplicationUser>>();
-
-            var userStore = sp.GetRequiredService<IUserStore<ApplicationUser>>();
             var userName = registration.UserName;
 
             if (string.IsNullOrEmpty(userName))
             {
-                return CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidUserName(userName)));
+                return CreateValidationProblem(IdentityResult.Failed(_userManager.ErrorDescriber.InvalidUserName(userName)));
             }
 
             var user = new ApplicationUser();
-            await userStore.SetUserNameAsync(user, userName, CancellationToken.None);
+            await _userStore.SetUserNameAsync(user, userName, CancellationToken.None);
             user.Name = registration.Name;
             user.SecondName = registration.SecondName;
             user.Patronymic = registration.Patronymic;
-            var result = await userManager.CreateAsync(user, registration.Password);
+            var result = await _userManager.CreateAsync(user, registration.Password);
 
             if (!result.Succeeded)
             {
@@ -290,25 +298,23 @@ namespace AICourseTester.Controllers
 
         [EnableRateLimiting("token")]
         [HttpPost("Login")]
-        public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> LoginUser(LogReq login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies, [FromServices] IServiceProvider sp)
+        public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> LoginUser(LogReq login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies)
         {
-            var signInManager = sp.GetRequiredService<SignInManager<ApplicationUser>>();
-
             var useCookieScheme = useCookies == true || useSessionCookies == true;
             var isPersistent = useCookies == true && useSessionCookies != true;
-            signInManager.AuthenticationScheme = useCookieScheme ? IdentityConstants.ApplicationScheme : IdentityConstants.BearerScheme;
+            _signInManager.AuthenticationScheme = useCookieScheme ? IdentityConstants.ApplicationScheme : IdentityConstants.BearerScheme;
 
-            var result = await signInManager.PasswordSignInAsync(login.UserName, login.Password, isPersistent, lockoutOnFailure: true);
+            var result = await _signInManager.PasswordSignInAsync(login.UserName, login.Password, isPersistent, lockoutOnFailure: true);
 
             if (result.RequiresTwoFactor)
             {
                 if (!string.IsNullOrEmpty(login.TwoFactorCode))
                 {
-                    result = await signInManager.TwoFactorAuthenticatorSignInAsync(login.TwoFactorCode, isPersistent, rememberClient: isPersistent);
+                    result = await _signInManager.TwoFactorAuthenticatorSignInAsync(login.TwoFactorCode, isPersistent, rememberClient: isPersistent);
                 }
                 else if (!string.IsNullOrEmpty(login.TwoFactorRecoveryCode))
                 {
-                    result = await signInManager.TwoFactorRecoveryCodeSignInAsync(login.TwoFactorRecoveryCode);
+                    result = await _signInManager.TwoFactorRecoveryCodeSignInAsync(login.TwoFactorRecoveryCode);
                 }
             }
 
@@ -320,11 +326,30 @@ namespace AICourseTester.Controllers
             return TypedResults.Empty;
         }
 
-        [Authorize, HttpPost("Logout")]
-        public async Task<ActionResult> LogoutUser([FromServices] IServiceProvider sp)
+        [EnableRateLimiting("token")]
+        [Authorize, HttpPost("Refresh")]
+        public async Task<Results<Ok<AccessTokenResponse>, UnauthorizedHttpResult, SignInHttpResult, ChallengeHttpResult>> RefreshToken([FromBody] RefreshRequest refreshRequest)
         {
-            var signInManager = sp.GetRequiredService<SignInManager<ApplicationUser>>();
-            await signInManager.SignOutAsync();
+
+            var refreshTokenProtector = _bearerTokenOptions.Get(IdentityConstants.BearerScheme).RefreshTokenProtector;
+            var refreshTicket = refreshTokenProtector.Unprotect(refreshRequest.RefreshToken);
+            // Reject the /refresh attempt with a 401 if the token expired or the security stamp validation fails
+            if (refreshTicket?.Properties?.ExpiresUtc is not { } expiresUtc ||
+                _timeProvider.GetUtcNow() >= expiresUtc ||
+                await _signInManager.ValidateSecurityStampAsync(refreshTicket.Principal) is not ApplicationUser user)
+            {
+                return TypedResults.Challenge();
+            }
+
+            var newPrincipal = await _signInManager.CreateUserPrincipalAsync(user);
+            return TypedResults.SignIn(newPrincipal, authenticationScheme: IdentityConstants.BearerScheme);
+        }
+
+        [EnableRateLimiting("token")]
+        [Authorize, HttpPost("Logout")]
+        public async Task<ActionResult> LogoutUser()
+        {
+            await _signInManager.SignOutAsync();
             return Ok();
         }
     }
