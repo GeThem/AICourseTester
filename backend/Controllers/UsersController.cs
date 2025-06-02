@@ -1,6 +1,7 @@
 ﻿using AICourseTester.Data;
 using AICourseTester.DTO;
 using AICourseTester.Models;
+using AICourseTester.Services;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -26,9 +27,11 @@ namespace AICourseTester.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IOptionsMonitor<BearerTokenOptions> _bearerTokenOptions;
         private readonly TimeProvider _timeProvider;
+        private readonly UsersService _usersService;
 
         public UsersController(MainDbContext context, UserManager<ApplicationUser> userManager, IUserStore<ApplicationUser> userStore,
-            SignInManager<ApplicationUser> signInManager, IOptionsMonitor<BearerTokenOptions> bearerTokenOptions, TimeProvider timeProvider)
+            SignInManager<ApplicationUser> signInManager, IOptionsMonitor<BearerTokenOptions> bearerTokenOptions, TimeProvider timeProvider,
+            UsersService usersService)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -36,38 +39,13 @@ namespace AICourseTester.Controllers
             _signInManager = signInManager;
             _bearerTokenOptions = bearerTokenOptions;
             _timeProvider = timeProvider;
-        }
-
-        public class UserData
-        {
-            public required string Id { get; set; }
-            public string? Name { get; set; }
-            public string? SecondName { get; set; }
-            public string? Patronymic { get; set; }
-            public string? Group { get; set; }
-        }
-
-        private IQueryable<UserData> UserLeftJoinGroup()
-        {
-            var result = _context.Users
-                .GroupJoin(_context.UserGroups, u => u.Id, g => g.UserId, (u, g) => new { u, g })
-                .SelectMany(ug => ug.g.DefaultIfEmpty(), (u, g) => new { u.u.Id, u.u.Name, u.u.SecondName, u.u.Patronymic, g.GroupId })
-                .GroupJoin(_context.Groups, u => u.GroupId, g => g.Id, (u, g) => new { u, g })
-                .SelectMany(ug => ug.g.DefaultIfEmpty(), (u, g) => new UserData
-                {
-                    Id = u.u.Id,
-                    Name = u.u.Name,
-                    SecondName = u.u.SecondName,
-                    Patronymic = u.u.Patronymic,
-                    Group = g.Name
-                });
-            return result;
+            _usersService = usersService;
         }
 
         [Authorize(Roles = "Administrator"), HttpGet]
-        public async Task<ActionResult<UserData[]>> GetUsers()
+        public async Task<ActionResult<UserDTO[]>> GetUsers()
         {
-            var users = UserLeftJoinGroup();
+            var users = _usersService.UserLeftJoinGroup();
             if (users.IsNullOrEmpty())
             {
                 return NotFound();
@@ -76,9 +54,9 @@ namespace AICourseTester.Controllers
         }
 
         [Authorize(Roles = "Administrator"), HttpGet("{userId}")]
-        public async Task<ActionResult<UserData?>> GetUser(string userId)
+        public async Task<ActionResult<UserDTO?>> GetUser(string userId)
         {
-            var user = await UserLeftJoinGroup().FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _usersService.UserLeftJoinGroup().FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
                 return NotFound();
@@ -176,9 +154,9 @@ namespace AICourseTester.Controllers
         }
 
         [Authorize(Roles = "Administrator"), HttpGet("Groups/{id}/")]
-        public async Task<ActionResult<UserData[]>> GetGroup(int id)
+        public async Task<ActionResult<UserDTO[]>> GetGroup(int id)
         {
-            var group = await _context.UserGroups.Where(g => g.GroupId == id).Select(g => new UserData
+            var group = await _context.UserGroups.Where(g => g.GroupId == id).Select(g => new UserDTO
             {
                 Id = g.User.Id,
                 Name = g.User.Name,
