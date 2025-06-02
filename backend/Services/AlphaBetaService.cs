@@ -76,11 +76,11 @@ namespace AICourseTester.Services
             ProblemTree<ABNode> tree = new ProblemTree<ABNode>();
             tree.Head = new ABNode();
             tree.Head.Id = 0;
-            if (height == 0)
+            if (height <= 1)
             {
                 return tree;
             }
-            _generateNodes(tree.Head, null, height, tree.Head.Id);
+            _generateNodes(tree.Head, null, height - 1, tree.Head.Id);
             return tree;
         }
 
