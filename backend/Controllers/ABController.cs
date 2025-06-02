@@ -7,6 +7,8 @@ using AICourseTester.Data;
 using AICourseTester.Models;
 using AICourseTester.Services;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using AICourseTester.DTO;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -19,11 +21,13 @@ namespace AICourseTester.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly MainDbContext _context;
+        private readonly UsersService _usersService;
 
-        public ABController(MainDbContext context, UserManager<ApplicationUser> userManager)
+        public ABController(MainDbContext context, UserManager<ApplicationUser> userManager, UsersService usersService)
         {
             _userManager = userManager;
             _context = context;
+            _usersService = usersService;
         }
 
         [HttpGet("Train")]
@@ -58,7 +62,7 @@ namespace AICourseTester.Controllers
         //}
 
         [HttpPost("Train")]
-        public ActionResult<List<ABNodeModel>> PostABTrainVerify(ProblemTree<ABNode> tree)
+        public ActionResult<List<ABNodeModel>> PossustABTrainVerify(ProblemTree<ABNode> tree)
         {
             var solution = AlphaBetaService.Search(tree);
             return solution;
@@ -172,10 +176,17 @@ namespace AICourseTester.Controllers
 
         [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpGet("Users/")]
-        public ActionResult<AlphaBeta[]?> GetUsers()
+        public async Task<ActionResult<AlphaBetaTaskDTO[]?>> GetUsers()
         {
-            var ab = _context.AlphaBeta.Where(f => f.User.UserName != "admin").ToArray();
-            return ab;
+            var ab = _usersService.UserLeftJoinGroup().Join(_context.AlphaBeta,
+                u => u.Id,
+                ab => ab.UserId,
+                (u, ab) => new AlphaBetaTaskDTO
+                {
+                    Task = ab,
+                    User = u
+                });
+            return await ab.ToArrayAsync();
         }
 
         [DisableRateLimiting]

@@ -6,6 +6,7 @@ namespace AICourseTester.Models
     public class AlphaBeta
     {
         public int Id { get; set; }
+        [JsonIgnore]
         public string UserId { get; set; } = null!;
         [JsonIgnore]
         public ApplicationUser User { get; set; } = null!;
@@ -16,12 +17,5 @@ namespace AICourseTester.Models
         public bool IsSolved { get; set; } = false;
 
         public DateTime Date { get; set; }
-    }
-
-    public class AlphaBetaResponse
-    {
-        public ProblemTree<ABNode>? Problem { get; set; }
-        public List<ABNodeModel>? Solution { get; set; }
-        public List<ABNodeModel>? UserSolution { get; set; }
     }
 }
