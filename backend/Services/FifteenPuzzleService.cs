@@ -1,4 +1,6 @@
 ﻿using AICourseTester.Models;
+using Microsoft.IdentityModel.Tokens;
+using System.Formats.Tar;
 using System.Security.Cryptography;
 
 namespace AICourseTester.Services
@@ -6,6 +8,232 @@ namespace AICourseTester.Services
     public class FifteenPuzzleService
     {
         public static readonly Func<ANode, int>[] Heuristics = [Heuristic1, Heuristic2];
+        public static readonly Random random = new Random();
+
+        public static ANode GenerateState(int iters, int heuristic, int dimensions = 3)
+        {
+            if (heuristic == 1)
+            {
+                return GenerateStateH1(dimensions, iters);
+            }
+            return GenerateStateH2(iters);
+        }
+        public static ANode GenerateStateH1(int dimensions, int iters)
+        {
+            ANode aNode = new ANode() { State = new int[dimensions][] };
+            for (int i = 0; i < dimensions; i++)
+            {
+                aNode.State[i] = new int[dimensions];
+                Array.Fill(aNode.State[i], -1);
+            }
+            var range = Enumerable.Range(1, dimensions * dimensions).ToList();
+            int P0 = random.Next(1, dimensions * dimensions - 1);
+            aNode.State[P0 / dimensions][P0 % dimensions] = -2;
+            for (int i = 0; i < iters; i++)
+            {
+                List<(int x, int y)> directions = new List<(int, int)>();
+                if (P0 / dimensions > 0 && aNode.State[(P0 / dimensions) - 1][P0 % dimensions] == -1)
+                {
+                    directions.Add((P0 % dimensions, (P0 / dimensions) - 1));
+                }
+                if (P0 / dimensions < dimensions - 1 && aNode.State[(P0 / dimensions) + 1][P0 % dimensions] == -1)
+                {
+                    directions.Add((P0 % dimensions, (P0 / dimensions) + 1));
+                }
+                if (P0 % dimensions > 0 && aNode.State[P0 / dimensions][(P0 - 1) % dimensions] == -1)
+                {
+                    directions.Add(((P0 - 1) % dimensions, P0 / dimensions));
+                }
+                if (P0 % dimensions < dimensions - 1 && aNode.State[P0 / dimensions][(P0 + 1) % dimensions] == -1)
+                {
+                    directions.Add(((P0 + 1) % dimensions, P0 / dimensions));
+                }
+                if (i != iters - 1)
+                {
+                    directions.Remove((0, 0));
+                }
+                var tile = directions[random.Next(0, directions.Count)];
+                aNode.State[tile.y][tile.x] = P0;
+                range.Remove(P0);
+                P0 = tile.y * dimensions + tile.x;
+            }
+            for (int i = 0; i < dimensions; i++)
+            {
+                for (int j = 0; j < dimensions; j++)
+                {
+                    if (aNode.State[i][j] == -1)
+                    {
+                        var idx = random.Next(0, range.Count);
+                        aNode.State[i][j] = range[idx];
+                        range.RemoveAt(idx);
+                    }
+                    else if (aNode.State[i][j] == -2)
+                    {
+                        aNode.State[i][j] = 0;
+                    }
+                }
+            }
+            return aNode;
+        }
+
+        private static List<(int x, int y)> CollectRows(bool[] rows, int[][]state, bool onFalse=false)
+        {
+            List<(int x, int y)> result = new();
+            for (int i = 0; i < 3; i++)
+            {
+                var flag = rows[i];
+                if (onFalse)
+                {
+                    if (flag)
+                    {
+                        continue;
+                    }
+                    flag = true;
+                }
+                if (!flag)
+                {
+                    continue;
+                }
+                for (int j = 0; j < 3; j++)
+                {
+                    if (state[i][j] > 0)
+                    {
+                        result.Add((j, i));
+                    }
+                }
+            }
+            return result;
+        }
+
+        private static List<(int x, int y)> CollectCollumns(bool[] columns, int[][] state, bool onFalse = false)
+        {
+            List<(int x, int y)> result = new();
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    var flag = columns[j];
+                    if (onFalse)
+                    {
+                        if (flag)
+                        {
+                            continue;
+                        }
+                        flag = true;
+                    }
+                    if (flag && state[i][j] > 0)
+                    {
+                        result.Add((j, i));
+                    }
+                }
+            }
+            return result;
+        }
+
+        public static ANode GenerateStateH2(int iters)
+        {
+            int dimensions = 3;
+            ANode aNode = new ANode() { State = new int[3][] };
+            for (int i = 0; i < dimensions; i++)
+            {
+                aNode.State[i] = new int[dimensions];
+                Array.Fill(aNode.State[i], -1);
+            }
+            var range = new ANode(3).State;
+            int A0 = random.Next(0, 4);
+            A0 = A0 / 2 * dimensions * (dimensions - 1) + A0 % 2 * (dimensions - 1);
+            aNode.State[A0 / dimensions][A0 % dimensions] = 0;
+            
+            bool[] AColumns = [false, false, false];
+            AColumns[A0 % dimensions] = true;
+            bool[] ARows = [false, false, false];
+            ARows[A0 / dimensions] = true;
+
+            for (int i = 0; i < iters; i++)
+            {
+                List<((int x, int y), bool isSide)> directions = new ();
+                if (A0 / dimensions > 0 && aNode.State[(A0 / dimensions) - 1][A0 % dimensions] == -1)
+                {
+                    directions.Add(((A0 % dimensions, (A0 / dimensions) - 1), false));
+                }
+                if (A0 / dimensions < dimensions - 1 && aNode.State[(A0 / dimensions) + 1][A0 % dimensions] == -1)
+                {
+                    directions.Add(((A0 % dimensions, (A0 / dimensions) + 1), false));
+                }
+                if (A0 % dimensions > 0 && aNode.State[A0 / dimensions][(A0 - 1) % dimensions] == -1)
+                {
+                    directions.Add((((A0 - 1) % dimensions, A0 / dimensions), true));
+                }
+                if (A0 % dimensions < dimensions - 1 && aNode.State[A0 / dimensions][(A0 + 1) % dimensions] == -1)
+                {
+                    directions.Add((((A0 + 1) % dimensions, A0 / dimensions), true));
+                }
+                
+                if (directions.IsNullOrEmpty())
+                {
+                    System.Console.WriteLine($"Iteration: {i}");
+                    break;
+                }
+                var Ai = directions[random.Next(0, directions.Count)];
+                directions.Remove(Ai);
+                ((int x, int y), bool isSide) Di = new();
+                (int x, int y) pos;
+                List<(int x, int y)> vals;
+                int value;
+                if (directions.Count > 0)
+                {
+                    Di = directions[random.Next(0, directions.Count)];
+                    vals = Di.isSide ? vals = CollectCollumns(AColumns, range, true) : CollectRows(ARows, range, true);
+                    if (i == 0)
+                    {
+                        if (Di.isSide && A0 % dimensions == dimensions - 1)
+                        {
+                            vals.Remove((0, 1));
+                        }
+                        else if (!Di.isSide && A0 == dimensions * dimensions - 1)
+                        {
+                            vals.Remove((1, 0));
+                        }
+                    } 
+                    if (vals.IsNullOrEmpty())
+                    {
+                        (Di, Ai) = (Ai, Di);
+                    }
+                    vals = Di.isSide ? vals = CollectCollumns(AColumns, range, true) : CollectRows(ARows, range, true);
+                    pos = vals[random.Next(0, vals.Count)];
+                    value = range[pos.y][pos.x];
+                    range[pos.y][pos.x] = 0;
+                    aNode.State[Di.Item1.y][Di.Item1.x] = value;
+                }
+                vals = Ai.isSide ? CollectCollumns(AColumns, range) : CollectRows(ARows, range);
+                if (vals.IsNullOrEmpty())
+                {
+                    vals = CollectRows([true, true, true], range);
+                }
+                pos = vals[random.Next(0, vals.Count)];
+                value = range[pos.y][pos.x];
+                range[pos.y][pos.x] = 0;
+                aNode.State[Ai.Item1.y][Ai.Item1.x] = value;
+                
+                AColumns[Ai.Item1.x] = true;
+                ARows[Ai.Item1.y] = true;
+                A0 = Ai.Item1.y * dimensions + Ai.Item1.x;
+            }
+            var tilesLeft = CollectCollumns([true, true, true], range).Select((p) => range[p.y][p.x]).ToList();
+            for (int i = 0; i < dimensions; i++)
+            {
+                for (int j = 0; j < dimensions; j++)
+                {
+                    if (aNode.State[i][j] == -1)
+                    {
+                        var idx = random.Next(0, tilesLeft.Count);
+                        aNode.State[i][j] = tilesLeft[idx];
+                        tilesLeft.RemoveAt(idx);
+                    }
+                }
+            }
+            return aNode;
+        }
 
         public static void ShuffleState(ANode node, int moves = 30)
         {
@@ -38,7 +266,7 @@ namespace AICourseTester.Services
                 int nX, nY;
                 while (true)
                 {
-                    moveIdx = RandomNumberGenerator.GetInt32(directions.Length);
+                    moveIdx = random.Next(0, directions.Length);
                     move = directions[moveIdx];
                     (nX, nY) = (x + move.x, y + move.y);
                     if (nX < 0 || nY < 0 || nX >= node.State.Length || nY >= node.State[0].Length)
@@ -269,11 +497,11 @@ namespace AICourseTester.Services
             tree.Head = startState;
             tree.Head.Id = 0;
             List<ANode> ignore = new() { tree.Head };
-            if (height == 0)
+            if (height <= 1)
             {
                 return (tree, ignore);
             }
-            _generateNodes(tree.Head, height, ignore, tree.Head.Id);
+            _generateNodes(tree.Head, height - 1, ignore, tree.Head.Id);
             return (tree, ignore);
         }
 
