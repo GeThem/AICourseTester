@@ -119,7 +119,7 @@ namespace AICourseTester.Controllers
             {
                 _context.AlphaBeta.Add(new AlphaBeta() { UserId = userId });
                 await _context.SaveChangesAsync();
-                ab = await _context.AlphaBeta.FirstOrDefaultAsync(f => f.UserId == _userManager.GetUserId(User));
+                ab = await _context.AlphaBeta.FirstOrDefaultAsync(f => f.UserId == userId);
             }
             ab.TreeHeight = treeHeight;
             ab.UserSolution = null;
