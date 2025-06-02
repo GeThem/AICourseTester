@@ -39,7 +39,12 @@ builder.Services.AddDbContext<MainDbContext>(options =>
 });
 
 builder.Services
-    .AddIdentityApiEndpoints<ApplicationUser>()
+    .AddIdentityApiEndpoints<ApplicationUser>(identityOptions =>
+    {
+        identityOptions.Lockout.MaxFailedAccessAttempts = 10;
+        identityOptions.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(30);
+        identityOptions.Lockout.AllowedForNewUsers = false;
+    })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<MainDbContext>();
 
@@ -81,7 +86,7 @@ builder.Services.AddRateLimiter(options =>
             TokenLimit = 50,
             QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
             QueueLimit = 0,
-            ReplenishmentPeriod = TimeSpan.FromSeconds(20),
+            ReplenishmentPeriod = TimeSpan.FromSeconds(60),
             TokensPerPeriod = 20,
             AutoReplenishment = true
         })
