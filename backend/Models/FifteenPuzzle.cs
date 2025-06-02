@@ -5,6 +5,7 @@ namespace AICourseTester.Models
     public class FifteenPuzzle
     {
         public int Id { get; set; }
+        [JsonIgnore]
         public string UserId { get; set; } = null!;
         [JsonIgnore]
         public ApplicationUser User { get; set; } = null!;
@@ -17,12 +18,5 @@ namespace AICourseTester.Models
         public bool IsSolved { get; set; } = false;
 
         public DateTime Date {  get; set; }
-    }
-
-    public class FifteenPuzzleResponse
-    {
-        public List<ANode>? Problem { get; set; }
-        public List<ANodeModel>? Solution { get; set; }
-        public List<ANodeModel>? UserSolution { get; set; }
     }
 }

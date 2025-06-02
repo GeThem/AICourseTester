@@ -3,13 +3,12 @@ using NuGet.Protocol;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
 using Microsoft.CodeAnalysis;
 using AICourseTester.Data;
 using AICourseTester.Models;
 using AICourseTester.Services;
-using NuGet.Packaging.Signing;
 using Microsoft.AspNetCore.RateLimiting;
+using AICourseTester.DTO;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -22,11 +21,13 @@ namespace AICourseTester.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly MainDbContext _context;
+        private readonly UsersService _usersService;
 
-        public AController(MainDbContext context, UserManager<ApplicationUser> userManager)
+        public AController(MainDbContext context, UserManager<ApplicationUser> userManager, UsersService usersService)
         {
             _userManager = userManager;
             _context = context;
+            _usersService = usersService;
         }
 
         [HttpGet("FifteenPuzzle/Train")]
@@ -170,10 +171,17 @@ namespace AICourseTester.Controllers
 
         [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpGet("FifteenPuzzle/Users/")]
-        public ActionResult<FifteenPuzzle[]?> GetUsers()
+        public async Task<ActionResult<FifteenPuzzleTaskDTO[]?>> GetUsers()
         {
-            var fp = _context.Fifteens.Where(f => f.User.UserName != "admin").ToArray();
-            return fp;
+            var fp = _usersService.UserLeftJoinGroup().Join(_context.Fifteens,
+                u => u.Id,
+                fp => fp.UserId,
+                (u, fp) => new FifteenPuzzleTaskDTO
+                {
+                    Task = fp,
+                    User = u
+                });
+            return await fp.ToArrayAsync();
         }
 
         [DisableRateLimiting]

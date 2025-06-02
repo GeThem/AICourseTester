@@ -14,7 +14,7 @@ namespace AICourseTester.Services
         }
         public IQueryable<UserDTO> UserLeftJoinGroup()
         {
-            var result = _context.Users
+            var result = _context.Users.Where(u => u.NormalizedUserName != "ADMIN")
                 .GroupJoin(_context.UserGroups, u => u.Id, g => g.UserId, (u, g) => new { u, g })
                 .SelectMany(ug => ug.g.DefaultIfEmpty(), (u, g) => new { u.u.Id, u.u.Name, u.u.SecondName, u.u.Patronymic, g.GroupId })
                 .GroupJoin(_context.Groups, u => u.GroupId, g => g.Id, (u, g) => new { u, g })
