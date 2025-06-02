@@ -5,6 +5,8 @@ namespace AICourseTester.Services
 {
     public class AlphaBetaService
     {
+        public static readonly Random random = new Random();
+
         public static void PrepareTree(ProblemTree<ABNode> tree)
         {
             tree.Head.depth = 0;
@@ -92,12 +94,12 @@ namespace AICourseTester.Services
             }
             if (height == 0)
             {
-                int value = RandomNumberGenerator.GetInt32(11);
+                int value = random.Next(0, 11);
                 node.B = node.A = value;
                 return id;
             }
             node.SubNodes = new List<ABNode>();
-            int lim = RandomNumberGenerator.GetInt32(3) + 1;
+            int lim = random.Next(2, 4);
             for (int i = 0; i < lim; i++)
             {
                 node.SubNodes.Add(new ABNode());
