@@ -1,5 +1,6 @@
 using AICourseTester.Data;
 using AICourseTester.Models;
+using AICourseTester.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +38,7 @@ builder.Services.AddDbContext<MainDbContext>(options =>
     options
     .UseNpgsql(builder.Configuration.GetConnectionString("main_db"));
 });
+builder.Services.AddScoped<UsersService>();
 
 builder.Services
     .AddIdentityApiEndpoints<ApplicationUser>(identityOptions =>
