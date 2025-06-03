@@ -183,7 +183,15 @@ namespace AICourseTester.Controllers
                 ab => ab.UserId,
                 (u, ab) => new AlphaBetaTaskDTO
                 {
-                    Task = ab,
+                    Task = new AlphaBetaDTO 
+                    {
+                        Problem = ab.Problem.FromJson<ProblemTree<ABNode>>(),
+                        UserSolution = ab.UserSolution.FromJson<List<ABNodeModel>>(),
+                        Solution = ab.Solution.FromJson<List<ABNodeModel>>(),
+                        TreeHeight = ab.TreeHeight,
+                        Date = ab.Date,
+                        IsSolved = ab.IsSolved
+                    },
                     User = u
                 });
             return await ab.ToArrayAsync();
@@ -198,7 +206,15 @@ namespace AICourseTester.Controllers
                 ab => ab.UserId,
                 (u, ab) => new AlphaBetaTaskDTO
                 {
-                    Task = ab,
+                    Task = new AlphaBetaDTO
+                    {
+                        Problem = ab.Problem.FromJson<ProblemTree<ABNode>>(),
+                        UserSolution = ab.UserSolution.FromJson<List<ABNodeModel>>(),
+                        Solution = ab.Solution.FromJson<List<ABNodeModel>>(),
+                        TreeHeight = ab.TreeHeight,
+                        Date = ab.Date,
+                        IsSolved = ab.IsSolved
+                    },
                     User = u
                 });
             var task = await ab.FirstOrDefaultAsync();
