@@ -177,22 +177,50 @@ namespace AICourseTester.Controllers
                 u => u.Id,
                 fp => fp.UserId,
                 (u, fp) => new FifteenPuzzleTaskDTO
-                {
-                    Task = fp,
-                    User = u
+                    {
+                        Task = new FifteenPuzzleDTO
+                        {
+                            Id = fp.Id,
+                            Problem = fp.Problem == null ? null : new List<ANode>() { new ANode() { State = fp.Problem.FromJson<int[][]>() } },
+                            Solution = null,
+                            UserSolution = null,
+                            Heuristic = fp.Heuristic,
+                            Dimensions = fp.Dimensions,
+                            TreeHeight = fp.TreeHeight,
+                            IsSolved = fp.IsSolved,
+                            Date = fp.Date,
+                        },
+                        User = u
                 });
             return await fp.ToArrayAsync();
         }
 
         [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpGet("FifteenPuzzle/Users/{userId}/")]
-        public ActionResult<FifteenPuzzleResponse> GetUser(string userId)
+        public async Task<ActionResult<FifteenPuzzleTaskDTO>> GetUser(string userId)
         {
-            var fp = _context.Fifteens.Where(f => f.UserId == userId).FirstOrDefault();
+            var fp = await _usersService.UserLeftJoinGroup().Join(_context.Fifteens,
+                u => u.Id,
+                fp => fp.UserId,
+                (u, fp) => new FifteenPuzzleTaskDTO
+                {
+                    Task = new FifteenPuzzleDTO
+                    {
+                        Id = fp.Id,
+                        Problem = fp.Problem == null ? null : FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight).Item2,
+                        Solution = fp.Solution == null ? null : fp.Solution.FromJson<List<ANodeModel>>(),
+                        UserSolution = fp.UserSolution == null ? null : fp.UserSolution.FromJson<List<ANodeModel>>(),
+                        Heuristic = fp.Heuristic,
+                        Dimensions = fp.Dimensions,
+                        TreeHeight = fp.TreeHeight,
+                        IsSolved = fp.IsSolved,
+                        Date = fp.Date,
+                    },
+                    User = u
+                }).FirstOrDefaultAsync();
             if (fp != null)
             {
-                var (_, list) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight);
-                return new FifteenPuzzleResponse() { Problem = list, Solution = fp.Solution?.FromJson<List<ANodeModel>>(), UserSolution = fp.UserSolution?.FromJson<List<ANodeModel>>() };
+                return fp;
             }
             return NotFound();
         }
