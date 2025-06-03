@@ -191,14 +191,18 @@ namespace AICourseTester.Controllers
 
         [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpGet("Users/{userId}/")]
-        public ActionResult<AlphaBetaResponse> GetUser(string userId)
+        public async Task<ActionResult<AlphaBetaTaskDTO>> GetUser(string userId)
         {
-            var ab = _context.AlphaBeta.Where(f => f.UserId == userId).FirstOrDefault();
-            if (ab != null)
-            {
-                return new AlphaBetaResponse() { Problem = ab.Problem?.FromJson<ProblemTree<ABNode>>(), Solution = ab.Solution?.FromJson<List<ABNodeModel>>(), UserSolution = ab.UserSolution?.FromJson<List<ABNodeModel>>() };
-            }
-            return NotFound();
+            var ab = _usersService.UserLeftJoinGroup(userId).Join(_context.AlphaBeta,
+                u => u.Id,
+                ab => ab.UserId,
+                (u, ab) => new AlphaBetaTaskDTO
+                {
+                    Task = ab,
+                    User = u
+                });
+            var task = await ab.FirstOrDefaultAsync();
+            return task == null ? NotFound() : task;
         }
 
         [DisableRateLimiting]
