@@ -12,9 +12,11 @@ namespace AICourseTester.Services
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
-        public IQueryable<UserDTO> UserLeftJoinGroup()
+        public IQueryable<UserDTO> UserLeftJoinGroup(string? userId = null)
         {
-            var result = _context.Users.Where(u => u.NormalizedUserName != "ADMIN")
+            var start = userId == null ? _context.Users.Where(u => u.NormalizedUserName != "ADMIN")
+                : _context.Users.Where(u => u.Id == userId);
+            var result = start
                 .GroupJoin(_context.UserGroups, u => u.Id, g => g.UserId, (u, g) => new { u, g })
                 .SelectMany(ug => ug.g.DefaultIfEmpty(), (u, g) => new { u.u.Id, u.u.Name, u.u.SecondName, u.u.Patronymic, g.GroupId })
                 .GroupJoin(_context.Groups, u => u.GroupId, g => g.Id, (u, g) => new { u, g })
