@@ -114,11 +114,12 @@ namespace AICourseTester.Controllers
             {
                 return new AlphaBetaSolutionDTO() 
                 { 
-                    Nodes = ab.UserSolution == null ? null : ab.UserSolution.FromJson<List<ABNodeModel>>(),
-                    Path = ab.UserPath == null ? null : ab.UserPath.FromJson<int[]>()
+                    Nodes = ab.Solution == null ? null : ab.Solution.FromJson<List<ABNodeModel>>(),
+                    Path = ab.Path == null ? null : ab.Path.FromJson<int[]>()
                 };
             }
-            ab.UserSolution = userSolution.ToJson();
+            ab.UserSolution = userSolution.Nodes.ToJson();
+            ab.UserPath = userSolution.Path.ToJson();
             var problem = ab.Problem.FromJson<ProblemTree<ABNode>>();
             var solution = AlphaBetaService.Search(problem);
             ab.Solution = solution.Nodes.ToJson();
