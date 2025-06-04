@@ -1,4 +1,7 @@
-﻿using AICourseTester.Models;
+﻿using AICourseTester.DTO;
+using AICourseTester.Models;
+using Microsoft.CodeAnalysis;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 
 namespace AICourseTester.Services
@@ -30,12 +33,14 @@ namespace AICourseTester.Services
             }
         }
 
-        public static List<ABNodeModel> Search(ProblemTree<ABNode> tree)
+        public static AlphaBetaSolutionDTO Search(ProblemTree<ABNode> tree)
         {
             PrepareTree(tree);
             List<ABNodeModel> solution = new List<ABNodeModel>();
+            List<int> path = new List<int>();
             _searchSubNode(tree.Head, solution);
-            return solution;
+            _correctSubNode(tree.Head, path);
+            return new AlphaBetaSolutionDTO() { Nodes = solution, Path = path.ToArray() };
         }
 
         private static (int, int) _searchSubNode(ABNode node, List<ABNodeModel> solution)
@@ -69,6 +74,17 @@ namespace AICourseTester.Services
             }
             solution.Add(new ABNodeModel(node));
             return (node.A, node.B);
+        }
+
+        private static void _correctSubNode(ABNode node, List<int> path)
+        {
+            if (node.SubNodes == null)
+            {
+                return;
+            }
+            var chosenNode = node.depth % 2 == 1 ? node.SubNodes.MinBy(sn => sn.A) : node.SubNodes.MaxBy(sn => sn.B);
+            path.Add(chosenNode.Id);
+            _correctSubNode(chosenNode, path);
         }
 
         public static ProblemTree<ABNode> GenerateTree(int height)

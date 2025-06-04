@@ -62,14 +62,14 @@ namespace AICourseTester.Controllers
         //}
 
         [HttpPost("Train")]
-        public ActionResult<List<ABNodeModel>> PossustABTrainVerify(ProblemTree<ABNode> tree)
+        public ActionResult<AlphaBetaSolutionDTO> PostABTrainVerify(ProblemTree<ABNode> tree)
         {
             var solution = AlphaBetaService.Search(tree);
             return solution;
         }
 
         [Authorize, HttpGet("Test")]
-        public async Task<ActionResult<AlphaBetaResponse>> GetABTest()
+        public async Task<ActionResult<AlphaBetaDTO>> GetABTest()
         {
             var ab = await _context.AlphaBeta.FirstOrDefaultAsync(f => f.UserId == _userManager.GetUserId(User));
             if (ab == null)
@@ -78,20 +78,32 @@ namespace AICourseTester.Controllers
             }
             if (ab.IsSolved)
             {
-                var problem = ab.Problem.FromJson<ProblemTree<ABNode>>();
-                var solution = ab.Solution.FromJson<List<ABNodeModel>>();
-                var userSolution = ab.UserSolution.FromJson<List<ABNodeModel>>();
-                return new AlphaBetaResponse() { Problem = problem, Solution = solution, UserSolution = userSolution };
+                return new AlphaBetaDTO() {
+                    Id = ab.Id,
+                    Problem = ab.Problem == null ? null : ab.Problem.FromJson<ProblemTree<ABNode>>(),
+                    Solution = ab.Solution == null ? null : ab.Solution.FromJson<List<ABNodeModel>>(),
+                    UserSolution = ab.UserSolution == null ? null : ab.UserSolution.FromJson<List<ABNodeModel>>(),
+                    Path = ab.Path == null ? null : ab.Path.FromJson<int[]>(),
+                    UserPath = ab.UserPath == null ? null : ab.UserPath.FromJson<int[]>(),
+                    Date = ab.Date,
+                    IsSolved = ab.IsSolved
+                };
             }
             if (ab.Problem == null)
             {
                 return NotFound();
             }
-            return new AlphaBetaResponse() { Problem = ab.Problem.FromJson<ProblemTree<ABNode>>() };
+            return new AlphaBetaDTO()
+            {
+                Id = ab.Id,
+                Problem = ab.Problem.FromJson<ProblemTree<ABNode>>(),
+                Date = ab.Date,
+                IsSolved = ab.IsSolved
+            };
         }
 
         [Authorize, HttpPost("Test")]
-        public async Task<ActionResult<AlphaBetaResponse>> PostABTestVerify(List<ABNodeModel> userSolution)
+        public async Task<ActionResult<AlphaBetaSolutionDTO>> PostABTestVerify(AlphaBetaSolutionDTO userSolution)
         {
             var ab = await _context.AlphaBeta.FirstOrDefaultAsync(f => f.UserId == _userManager.GetUserId(User));
             if (ab == null)
@@ -100,17 +112,22 @@ namespace AICourseTester.Controllers
             }
             if (ab.IsSolved)
             {
-                return new AlphaBetaResponse() { Solution = ab.Solution.FromJson<List<ABNodeModel>>() };
+                return new AlphaBetaSolutionDTO() 
+                { 
+                    Nodes = ab.UserSolution == null ? null : ab.UserSolution.FromJson<List<ABNodeModel>>(),
+                    Path = ab.UserPath == null ? null : ab.UserPath.FromJson<int[]>()
+                };
             }
             ab.UserSolution = userSolution.ToJson();
             var problem = ab.Problem.FromJson<ProblemTree<ABNode>>();
             var solution = AlphaBetaService.Search(problem);
-            ab.Solution = solution.ToJson();
+            ab.Solution = solution.Nodes.ToJson();
+            ab.Path = solution.Path.ToJson();
             ab.IsSolved = true;
 
             _context.AlphaBeta.Update(ab);
             await _context.SaveChangesAsync();
-            return new AlphaBetaResponse() { Problem = problem, Solution = solution };
+            return solution;
         }
         private async Task<bool> _assignTask(string userId, int treeHeight)
         {
