@@ -12,7 +12,9 @@ namespace AICourseTester.Models
         public ApplicationUser User { get; set; } = null!;
         public string? Problem { get; set; }
         public string? Solution { get; set; }
+        public string? Path { get; set; }
         public string? UserSolution { get; set; }
+        public string? UserPath { get; set; }
         public int TreeHeight { get; set; } = 3;
         public bool IsSolved { get; set; } = false;
 
