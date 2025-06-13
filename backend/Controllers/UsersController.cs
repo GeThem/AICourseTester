@@ -42,9 +42,17 @@ namespace AICourseTester.Controllers
             _usersService = usersService;
         }
 
-        [Authorize(Roles = "Administrator"), HttpGet]
+        [EnableRateLimiting("token")]
+        [Authorize, HttpGet]
         public async Task<ActionResult<UserDTO[]>> GetUsers()
         {
+            var reqUser = await _userManager.GetUserAsync(User);
+            var roles = await _userManager.GetRolesAsync(reqUser);
+            if (roles.FirstOrDefault(r => r == "Administrator") == null)
+            {
+                var user = await _usersService.UserLeftJoinGroup(reqUser.Id).ToArrayAsync();
+                return user;
+            }
             var users = _usersService.UserLeftJoinGroup();
             if (users.IsNullOrEmpty())
             {
@@ -64,13 +72,27 @@ namespace AICourseTester.Controllers
             return user;
         }
 
-        [Authorize(Roles = "Administrator"), HttpPut("{userId}")]
+        [EnableRateLimiting("token")]
+        [Authorize, HttpPut("{userId}")]
         public async Task<ActionResult<IdentityResult>> UpdateUser(UserModifyDTO userNewData, string userId)
         {
+            var reqUser = await _userManager.GetUserAsync(User);
+            var roles = await _userManager.GetRolesAsync(reqUser);
+            if (roles.FirstOrDefault(r => r == "Administrator") == null)
+            {
+                if (reqUser.Id != userId)
+                {
+                    return BadRequest();
+                }
+            }
             var user = await _context.Users.FirstOrDefaultAsync(f => f.Id == userId);
             if (user == null)
             {
                 return NotFound();
+            }
+            if (userNewData.Pfp != null)
+            {
+                user.PfpPath = await _usersService.UploadPfp(userId, userNewData.Pfp);
             }
             if (userNewData.RemoveGroup)
             {
@@ -283,18 +305,6 @@ namespace AICourseTester.Controllers
             _signInManager.AuthenticationScheme = useCookieScheme ? IdentityConstants.ApplicationScheme : IdentityConstants.BearerScheme;
 
             var result = await _signInManager.PasswordSignInAsync(login.UserName, login.Password, isPersistent, lockoutOnFailure: true);
-
-            if (result.RequiresTwoFactor)
-            {
-                if (!string.IsNullOrEmpty(login.TwoFactorCode))
-                {
-                    result = await _signInManager.TwoFactorAuthenticatorSignInAsync(login.TwoFactorCode, isPersistent, rememberClient: isPersistent);
-                }
-                else if (!string.IsNullOrEmpty(login.TwoFactorRecoveryCode))
-                {
-                    result = await _signInManager.TwoFactorRecoveryCodeSignInAsync(login.TwoFactorRecoveryCode);
-                }
-            }
 
             if (!result.Succeeded)
             {

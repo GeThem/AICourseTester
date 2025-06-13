@@ -31,7 +31,7 @@ namespace AICourseTester.Controllers
         }
 
         [HttpGet("Train")]
-        public ProblemTree<ABNode> GetABTrain([System.Web.Http.FromUri] int depth = 3)
+        public ProblemTree<ABNode> GetABTrain(int depth = 3, int max = 10, int template = 1)
         {
             var tree = AlphaBetaService.GenerateTree(depth);
             return tree;
@@ -169,7 +169,7 @@ namespace AICourseTester.Controllers
 
         [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpPost("Users/{userId}/Assign")]
-        public async Task<ActionResult> PostFPTestAssign(string userId, int treeHeight)
+        public async Task<ActionResult> PostFPTestAssign(string userId, int treeHeight, int max = 10, int template = 1)
         {
             if (await _assignTask(userId, treeHeight))
             {
@@ -181,7 +181,7 @@ namespace AICourseTester.Controllers
 
         [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpPost("Groups/{groupId}/Assign")]
-        public async Task<ActionResult> PostFPTestAssign(int groupId, int treeHeight)
+        public async Task<ActionResult> PostFPTestAssign(int groupId, int treeHeight, int max = 10, int template = 1)
         {
             var userIds = await _context.UserGroups.Include(ug => ug.User).Where(ug => ug.GroupId == groupId).Select(ug => ug.UserId).ToArrayAsync();
             foreach (var userId in userIds)

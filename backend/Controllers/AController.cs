@@ -199,7 +199,7 @@ namespace AICourseTester.Controllers
         [Authorize(Roles = "Administrator"), HttpGet("FifteenPuzzle/Users/{userId}/")]
         public async Task<ActionResult<FifteenPuzzleTaskDTO>> GetUser(string userId)
         {
-            var fp = await _usersService.UserLeftJoinGroup().Join(_context.Fifteens,
+            var fp = await _usersService.UserLeftJoinGroup(userId).Join(_context.Fifteens,
                 u => u.Id,
                 fp => fp.UserId,
                 (u, fp) => new FifteenPuzzleTaskDTO
