@@ -1,3 +1,6 @@
 bin/
 .vs/
 obj/
+*.py
+backend/wwwroot/Images/*
+!backend/wwwroot/Images/Default.webp
