@@ -1,6 +1,7 @@
 using AICourseTester.Data;
 using AICourseTester.Models;
 using AICourseTester.Services;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -112,7 +113,9 @@ app.UseHttpsRedirection();
 app.UseCors(MyAllowSpecificOrigins);
 
 app.UseAuthentication();
-app.UseAuthorization(); 
+app.UseAuthorization();
+
+app.UseStaticFiles();
 
 app.MapControllers();
 
