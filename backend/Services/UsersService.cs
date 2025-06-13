@@ -39,9 +39,8 @@ namespace AICourseTester.Services
                     SecondName = u.u.SecondName,
                     Patronymic = u.u.Patronymic,
                     Group = g.Name,
-                    Pfp = u.u.PfpPath == null ?
-                    Environment.GetEnvironmentVariable("LOCAL_URL").Split(";", StringSplitOptions.None)[0] + "/Images/Default.webp"
-                    : Environment.GetEnvironmentVariable("LOCAL_URL").Split(";", StringSplitOptions.None)[0] + $"/{ u.u.PfpPath}"
+                    Pfp = Environment.GetEnvironmentVariable("LOCAL_URL").Split(";", StringSplitOptions.None)[0]
+                        + $"/{u.u.PfpPath ?? "Images/Default.webp"}"
                 });
             return result;
         }

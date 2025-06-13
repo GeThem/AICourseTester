@@ -74,7 +74,7 @@ namespace AICourseTester.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AlphaBeta");
+                    b.ToTable("AlphaBeta", (string)null);
                 });
 
             modelBuilder.Entity("AICourseTester.Models.ApplicationUser", b =>
@@ -181,7 +181,7 @@ namespace AICourseTester.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Fifteens");
+                    b.ToTable("Fifteens", (string)null);
                 });
 
             modelBuilder.Entity("AICourseTester.Models.Group", b =>
@@ -201,7 +201,7 @@ namespace AICourseTester.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Groups");
+                    b.ToTable("Groups", (string)null);
                 });
 
             modelBuilder.Entity("AICourseTester.Models.UserGroups", b =>
@@ -216,7 +216,7 @@ namespace AICourseTester.Migrations
 
                     b.HasIndex("GroupId");
 
-                    b.ToTable("UserGroups");
+                    b.ToTable("UserGroups", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
