@@ -9,7 +9,7 @@
         public string? SecondName { get; set; }
         public string? Patronymic { get; set; }
         public int? GroupId { get; set; }
-
         public bool RemoveGroup { get; set; } = false;
+        public IFormFile? Pfp { get; init; }
     }
 }

@@ -9,5 +9,6 @@ namespace AICourseTester.DTO
         public string? SecondName { get; set; }
         public string? Patronymic { get; set; }
         public string? Group { get; set; }
+        public string? Pfp { get; set; }
     }
 }
