@@ -16,6 +16,8 @@ namespace AICourseTester.Models
         public string? UserSolution { get; set; }
         public string? UserPath { get; set; }
         public int TreeHeight { get; set; } = 3;
+        public int? MaxValue { get; set; }
+        public int? Template { get; set; }
         public bool IsSolved { get; set; } = false;
 
         public DateTime Date { get; set; }

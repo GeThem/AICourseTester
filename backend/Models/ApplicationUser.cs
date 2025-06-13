@@ -9,5 +9,6 @@ namespace AICourseTester.Models
         public string? Name { get; set; }
         public string? SecondName { get; set; }
         public string? Patronymic { get; set; }
+        public string? PfpPath { get; set; }
     }
 }

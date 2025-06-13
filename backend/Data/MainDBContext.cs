@@ -47,12 +47,14 @@ namespace AICourseTester.Data
                 .Property(fp => fp.IsSolved)
                 .HasDefaultValue(false);
 
-            modelBuilder.Entity<ApplicationUser>().Ignore(c => c.Email)
-                                          .Ignore(c => c.NormalizedEmail)
-                                          .Ignore(c => c.EmailConfirmed)
-                                          .Ignore(c => c.TwoFactorEnabled)
-                                          .Ignore(c => c.PhoneNumber)
-                                          .Ignore(c => c.PhoneNumberConfirmed);
+            modelBuilder.Entity<ApplicationUser>()
+                .Ignore(c => c.Email)
+                .Ignore(c => c.NormalizedEmail)
+                .Ignore(c => c.EmailConfirmed)
+                .Ignore(c => c.TwoFactorEnabled)
+                .Ignore(c => c.PhoneNumber)
+                .Ignore(c => c.PhoneNumberConfirmed);
+
         }
     }
 }
