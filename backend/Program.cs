@@ -39,7 +39,7 @@ builder.Services.AddDbContext<MainDbContext>(options =>
     options
     .UseNpgsql(builder.Configuration.GetConnectionString("main_db"));
 });
-builder.Services.AddScoped<UsersService>();
+builder.Services.AddTransient<UsersService>();
 
 builder.Services
     .AddIdentityApiEndpoints<ApplicationUser>(identityOptions =>
