@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using AICourseTester.Models;
 using Azure.Core;
+using SixLabors.ImageSharp.Formats.Png;
 
 namespace AICourseTester.Services
 {
@@ -47,7 +48,8 @@ namespace AICourseTester.Services
 
         public async Task<string> UploadPfp(string userId, IFormFile pfp)
         {
-            var pfpPath = $"Images/{userId}.webp";
+            var encoder = new PngEncoder();          
+            var pfpPath = $"Images/{userId}.png";
             var fullPath = Path.Combine(_webHostEnvironment.WebRootPath, pfpPath);
             using var ms = new MemoryStream();
             await pfp.CopyToAsync(ms);
@@ -55,9 +57,14 @@ namespace AICourseTester.Services
             using var input = Image.Load<Rgba32>(ms);
             if (input.Width > 256 || input.Height > 256)
             {
-                input.Mutate(x => x.Resize(256, 256));
+                input.Mutate(x => x.Resize(new ResizeOptions(){
+                    Position = AnchorPositionMode.Center,
+                    Mode = ResizeMode.Crop,
+                    Size = new Size(256, 256),
+                    Sampler = KnownResamplers.Lanczos8
+                }));
             }
-            await input.SaveAsWebpAsync(fullPath);
+            await input.SaveAsync(fullPath, encoder);
             return pfpPath;
         }
 
