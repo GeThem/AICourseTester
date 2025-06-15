@@ -10,8 +10,6 @@ using AICourseTester.Services;
 using Microsoft.AspNetCore.RateLimiting;
 using AICourseTester.DTO;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace AICourseTester.Controllers
 {
     [EnableRateLimiting("token")]
@@ -31,7 +29,7 @@ namespace AICourseTester.Controllers
         }
 
         [HttpGet("FifteenPuzzle/Train")]
-        public List<ANode> GetFPTrain([System.Web.Http.FromUri] int heuristic, [System.Web.Http.FromUri] int height = 3, [System.Web.Http.FromUri] int dimensions = 4)
+        public List<ANode> GetFPTrain(int heuristic, int height = 3, int dimensions = 4)
         {
             var aNode = FifteenPuzzleService.GenerateState(height, heuristic, dimensions);
             //ANode aNode = new ANode(dimensions);
@@ -123,8 +121,8 @@ namespace AICourseTester.Controllers
             fp.Solution = null;
             fp.IsSolved = false;
             fp.Date = DateTime.Now;
-            ANode aNode = new ANode(dimensions);
-            FifteenPuzzleService.ShuffleState(aNode);
+            
+            var aNode = FifteenPuzzleService.GenerateState(treeHeight, heuristic, dimensions);
             var (_, listInner) = FifteenPuzzleService.GenerateTree(aNode, treeHeight);
 
             fp.Problem = aNode.State.ToJson();
@@ -134,7 +132,7 @@ namespace AICourseTester.Controllers
 
         [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpPost("FifteenPuzzle/Users/Assign")]
-        public async Task<ActionResult> PostFPTestAssign(string[] userIds, int dimensions, int treeHeight, int heuristic)
+        public async Task<ActionResult> PostFPTestAssign(string[] userIds, int dimensions = 4, int treeHeight = 3, int heuristic = 1)
         {
             foreach (var userId in userIds)
             {
@@ -146,7 +144,7 @@ namespace AICourseTester.Controllers
 
         [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpPost("FifteenPuzzle/Users/{userId}/Assign")]
-        public async Task<ActionResult> PostFPTestAssign(string userId, int dimensions, int treeHeight, int heuristic)
+        public async Task<ActionResult> PostFPTestAssign(string userId, int dimensions = 4, int treeHeight = 3, int heuristic = 1)
         {
             if (await _assignTask(userId, heuristic, dimensions, treeHeight))
             {
@@ -158,7 +156,7 @@ namespace AICourseTester.Controllers
 
         [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpPost("FifteenPuzzle/Groups/{groupId}/Assign")]
-        public async Task<ActionResult> PostFPTestAssign(int groupId, int dimensions, int treeHeight, int heuristic)
+        public async Task<ActionResult> PostFPTestAssign(int groupId, int dimensions = 4, int treeHeight = 3, int heuristic = 1)
         {
             var userIds = await _context.UserGroups.Include(ug => ug.User).Where(ug => ug.GroupId == groupId).Select(ug => ug.UserId).ToArrayAsync();
             foreach (var userId in userIds)
