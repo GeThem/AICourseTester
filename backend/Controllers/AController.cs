@@ -39,7 +39,7 @@ namespace AICourseTester.Controllers
         }
 
         [HttpPost("FifteenPuzzle/Train")]
-        public ActionResult<List<ANodeModel>> PostFPTrainVerify(List<ANode> list, [System.Web.Http.FromUri] int heuristic = 1)
+        public ActionResult<List<ANodeDTO>> PostFPTrainVerify(List<ANode> list, [System.Web.Http.FromUri] int heuristic = 1)
         {
             if (heuristic != 1 && heuristic != 2)
             {
@@ -61,8 +61,8 @@ namespace AICourseTester.Controllers
             if (fp.IsSolved)
             {
                 var (_, problem) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight);
-                var solution = fp.Solution.FromJson<List<ANodeModel>>();
-                var userSolution = fp.UserSolution.FromJson<List<ANodeModel>>();
+                var solution = fp.Solution.FromJson<List<ANodeDTO>>();
+                var userSolution = fp.UserSolution.FromJson<List<ANodeDTO>>();
                 return new FifteenPuzzleResponse() { Problem = problem, Solution = solution, UserSolution = userSolution };
             }
             if (fp.Problem == null)
@@ -74,7 +74,7 @@ namespace AICourseTester.Controllers
         }
 
         [Authorize, HttpPost("FifteenPuzzle/Test")]
-        public async Task<ActionResult<FifteenPuzzleResponse>> PostFPTestVerify(List<ANodeModel> userSolution)
+        public async Task<ActionResult<FifteenPuzzleResponse>> PostFPTestVerify(List<ANodeDTO> userSolution)
         {
             var fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == _userManager.GetUserId(User));
             if (fp == null)
@@ -83,7 +83,7 @@ namespace AICourseTester.Controllers
             }
             if (fp.IsSolved)
             {
-                return new FifteenPuzzleResponse() { Solution = fp.Solution.FromJson<List<ANodeModel>>() };
+                return new FifteenPuzzleResponse() { Solution = fp.Solution.FromJson<List<ANodeDTO>>() };
             }
             var (problemTree, problem) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight);
 
@@ -206,8 +206,8 @@ namespace AICourseTester.Controllers
                     {
                         Id = fp.Id,
                         Problem = fp.Problem == null ? null : FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight).Item2,
-                        Solution = fp.Solution == null ? null : fp.Solution.FromJson<List<ANodeModel>>(),
-                        UserSolution = fp.UserSolution == null ? null : fp.UserSolution.FromJson<List<ANodeModel>>(),
+                        Solution = fp.Solution == null ? null : fp.Solution.FromJson<List<ANodeDTO>>(),
+                        UserSolution = fp.UserSolution == null ? null : fp.UserSolution.FromJson<List<ANodeDTO>>(),
                         Heuristic = fp.Heuristic,
                         Dimensions = fp.Dimensions,
                         TreeHeight = fp.TreeHeight,

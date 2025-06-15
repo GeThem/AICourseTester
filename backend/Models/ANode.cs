@@ -79,15 +79,15 @@ namespace AICourseTester.Models
         }
     }
 
-    public class ANodeModel
+    public class ANodeDTO
     {
         public int Id { get; set; }
         public int G { get; set; } = -1;
         public int H { get; set; } = -1;
         public int F { get; set; } = -1;
 
-        public ANodeModel() { }
-        public ANodeModel(ANode node)
+        public ANodeDTO() { }
+        public ANodeDTO(ANode node)
         {
             Id = node.Id;
             G = node.G;

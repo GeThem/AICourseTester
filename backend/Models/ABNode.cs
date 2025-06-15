@@ -39,14 +39,14 @@ namespace AICourseTester.Models
         }
     }
 
-    public class ABNodeModel
+    public class ABNodeDTO
     {
         public int Id { get; set; }
         public int A { get; set; } = int.MinValue;
         public int B { get; set; } = int.MaxValue;
 
-        public ABNodeModel() { }
-        public ABNodeModel(ABNode node)
+        public ABNodeDTO() { }
+        public ABNodeDTO(ABNode node)
         {
             Id = node.Id;
             A = node.A;

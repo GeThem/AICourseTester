@@ -6,8 +6,8 @@ namespace AICourseTester.DTO
     {
         public int Id { get; set; }
         public List<ANode>? Problem { get; set; }
-        public List<ANodeModel>? Solution { get; set; }
-        public List<ANodeModel>? UserSolution { get; set; }
+        public List<ANodeDTO>? Solution { get; set; }
+        public List<ANodeDTO>? UserSolution { get; set; }
         public int? Heuristic { get; set; }
         public int Dimensions { get; set; }
         public int TreeHeight { get; set; }

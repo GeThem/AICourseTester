@@ -423,7 +423,7 @@ namespace AICourseTester.Services
             return null;
         }
 
-        public static List<ANodeModel> Search(ProblemTree<ANode> tree, Func<ANode, int> h)
+        public static List<ANodeDTO> Search(ProblemTree<ANode> tree, Func<ANode, int> h)
         {
             OrderedSet<ANode> openNodes = new(state => state.F)
             {
@@ -440,12 +440,12 @@ namespace AICourseTester.Services
                 if (curr.F - curr.G == 0)
                 {
                     closedNodes.Add(curr);
-                    return closedNodes.Select(n => new ANodeModel(n)).ToList();
+                    return closedNodes.Select(n => new ANodeDTO(n)).ToList();
                 }
                 closedNodes.Add(curr);
                 if (curr.SubNodes == null)
                 {
-                    return closedNodes.Select(n => new ANodeModel(n)).ToList();
+                    return closedNodes.Select(n => new ANodeDTO(n)).ToList();
                 }
                 foreach (var state in curr.SubNodes)
                 {
@@ -486,7 +486,7 @@ namespace AICourseTester.Services
                     openNodes.Add(state);
                 }
             }
-            return closedNodes.Select(n => new ANodeModel(n)).ToList();
+            return closedNodes.Select(n => new ANodeDTO(n)).ToList();
         }
 
         public static (ProblemTree<ANode>, List<ANode>) GenerateTree(ANode startState, int height)

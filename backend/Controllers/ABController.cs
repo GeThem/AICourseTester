@@ -54,8 +54,8 @@ namespace AICourseTester.Controllers
                 return new AlphaBetaDTO() {
                     Id = ab.Id,
                     Problem = ab.Problem == null ? null : ab.Problem.FromJson<ProblemTree<ABNode>>(),
-                    Solution = ab.Solution == null ? null : ab.Solution.FromJson<List<ABNodeModel>>(),
-                    UserSolution = ab.UserSolution == null ? null : ab.UserSolution.FromJson<List<ABNodeModel>>(),
+                    Solution = ab.Solution == null ? null : ab.Solution.FromJson<List<ABNodeDTO>>(),
+                    UserSolution = ab.UserSolution == null ? null : ab.UserSolution.FromJson<List<ABNodeDTO>>(),
                     Path = ab.Path == null ? null : ab.Path.FromJson<int[]>(),
                     UserPath = ab.UserPath == null ? null : ab.UserPath.FromJson<int[]>(),
                     Date = ab.Date,
@@ -87,7 +87,7 @@ namespace AICourseTester.Controllers
             {
                 return new AlphaBetaSolutionDTO() 
                 { 
-                    Nodes = ab.Solution == null ? null : ab.Solution.FromJson<List<ABNodeModel>>(),
+                    Nodes = ab.Solution == null ? null : ab.Solution.FromJson<List<ABNodeDTO>>(),
                     Path = ab.Path == null ? null : ab.Path.FromJson<int[]>()
                 };
             }
@@ -202,8 +202,8 @@ namespace AICourseTester.Controllers
                     Task = new AlphaBetaDTO
                     {
                         Problem = ab.Problem == null ? null : ab.Problem.FromJson<ProblemTree<ABNode>>(),
-                        UserSolution = ab.UserSolution == null ? null : ab.UserSolution.FromJson<List<ABNodeModel>>(),
-                        Solution = ab.Solution == null ? null : ab.Solution.FromJson<List<ABNodeModel>>(),
+                        UserSolution = ab.UserSolution == null ? null : ab.UserSolution.FromJson<List<ABNodeDTO>>(),
+                        Solution = ab.Solution == null ? null : ab.Solution.FromJson<List<ABNodeDTO>>(),
                         TreeHeight = ab.TreeHeight,
                         Date = ab.Date,
                         IsSolved = ab.IsSolved

@@ -34,18 +34,18 @@ namespace AICourseTester.Services
         public static AlphaBetaSolutionDTO Search(ProblemTree<ABNode> tree)
         {
             PrepareTree(tree);
-            List<ABNodeModel> solution = new List<ABNodeModel>();
+            List<ABNodeDTO> solution = new List<ABNodeDTO>();
             List<int> path = new List<int>();
             _searchSubNode(tree.Head, solution);
             _correctSubNode(tree.Head, path);
             return new AlphaBetaSolutionDTO() { Nodes = solution, Path = path.ToArray() };
         }
 
-        private static (int, int) _searchSubNode(ABNode node, List<ABNodeModel> solution)
+        private static (int, int) _searchSubNode(ABNode node, List<ABNodeDTO> solution)
         {
             if (node.SubNodes == null)
             {
-                solution.Add(new ABNodeModel(node));
+                solution.Add(new ABNodeDTO(node));
                 return (node.A, node.B);
             }
             if (node.prv != null)
@@ -70,7 +70,7 @@ namespace AICourseTester.Services
                     break;
                 }
             }
-            solution.Add(new ABNodeModel(node));
+            solution.Add(new ABNodeDTO(node));
             return (node.A, node.B);
         }
 

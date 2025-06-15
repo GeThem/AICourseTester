@@ -4,7 +4,7 @@ namespace AICourseTester.DTO
 {
     public class AlphaBetaSolutionDTO
     {
-        public List<ABNodeModel>? Nodes { get; set; }
+        public List<ABNodeDTO>? Nodes { get; set; }
         public int[]? Path { get; set; }
     }
 }
