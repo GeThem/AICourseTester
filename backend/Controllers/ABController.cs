@@ -7,10 +7,7 @@ using AICourseTester.Data;
 using AICourseTester.Models;
 using AICourseTester.Services;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using AICourseTester.DTO;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace AICourseTester.Controllers
 {
@@ -31,35 +28,11 @@ namespace AICourseTester.Controllers
         }
 
         [HttpGet("Train")]
-        public ProblemTree<ABNode> GetABTrain(int depth = 3, int max = 10, int template = 1)
+        public ProblemTree<ABNode> GetABTrain(int depth = 3, int max = 15, int template = 1)
         {
-            var tree = AlphaBetaService.GenerateTree(depth);
+            var tree = AlphaBetaService.GenerateTree3(max, template);
             return tree;
         }
-
-        //[HttpGet("Train/Test")]
-        //public ActionResult<AlphaBetaResponse> GetABTrainTest()
-        //{
-        //    ABNode aNode = new ABNode();
-        //    aNode.SubNodes = [new ABNode(), new ABNode()];
-        //    int i = -1;
-        //    int[] vals = [10, 5, 7, 11, 12, 8, 9, 8, 5, 12, 11, 12, 9, 8, 7, 10];
-        //    foreach (var node1 in aNode.SubNodes)
-        //    {
-        //        node1.SubNodes = [new ABNode(), new ABNode()];
-        //        foreach (var node2 in node1.SubNodes)
-        //        {
-        //            node2.SubNodes = [new ABNode(), new ABNode()];
-        //            foreach (var node3 in node2.SubNodes)
-        //            {
-        //                node3.SubNodes = [new ABNode() { A = vals[++i], B = vals[i] }, new ABNode() { A = vals[++i], B = vals[i] }];
-        //            }
-        //        }
-        //    }
-        //    var tree = new ProblemTree<ABNode>() { Head = aNode };
-        //    var sol = AlphaBetaService.Search((ProblemTree<ABNode>)tree.Clone());
-        //    return new AlphaBetaResponse() { Problem=tree, Solution=sol };
-        //}
 
         [HttpPost("Train")]
         public ActionResult<AlphaBetaSolutionDTO> PostABTrainVerify(ProblemTree<ABNode> tree)
@@ -130,7 +103,7 @@ namespace AICourseTester.Controllers
             await _context.SaveChangesAsync();
             return solution;
         }
-        private async Task<bool> _assignTask(string userId, int treeHeight)
+        private async Task<bool> _assignTask(string userId, int treeHeight, int maxValue, int template)
         {
             if ((await _context.Users.FirstOrDefaultAsync(u => u.Id == userId)) == null)
             {
@@ -148,8 +121,10 @@ namespace AICourseTester.Controllers
             ab.Solution = null;
             ab.IsSolved = false;
             ab.Date = DateTime.Now;
+            ab.Template = template;
+            ab.MaxValue = maxValue;
 
-            var problemInner = AlphaBetaService.GenerateTree(ab.TreeHeight);
+            var problemInner = AlphaBetaService.GenerateTree3((int)ab.MaxValue, (int)ab.Template);
             ab.Problem = problemInner.ToJson();
             _context.AlphaBeta.Update(ab);
             return true;
@@ -157,11 +132,11 @@ namespace AICourseTester.Controllers
 
         [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpPost("Users/Assign")]
-        public async Task<ActionResult> PostFPTestAssign(string[] userIds, int treeHeight)
+        public async Task<ActionResult> PostFPTestAssign(string[] userIds, int treeHeight, int max = 15, int template = 1)
         {
             foreach (var userId in userIds)
             {
-                await _assignTask(userId, treeHeight);
+                await _assignTask(userId, treeHeight, max, template);
             }
             await _context.SaveChangesAsync();
             return Ok();
@@ -169,9 +144,9 @@ namespace AICourseTester.Controllers
 
         [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpPost("Users/{userId}/Assign")]
-        public async Task<ActionResult> PostFPTestAssign(string userId, int treeHeight, int max = 10, int template = 1)
+        public async Task<ActionResult> PostFPTestAssign(string userId, int treeHeight, int max = 15, int template = 1)
         {
-            if (await _assignTask(userId, treeHeight))
+            if (await _assignTask(userId, treeHeight, max, template))
             {
                 await _context.SaveChangesAsync();
                 return Ok();
@@ -181,12 +156,12 @@ namespace AICourseTester.Controllers
 
         [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpPost("Groups/{groupId}/Assign")]
-        public async Task<ActionResult> PostFPTestAssign(int groupId, int treeHeight, int max = 10, int template = 1)
+        public async Task<ActionResult> PostFPTestAssign(int groupId, int treeHeight, int max = 15, int template = 1)
         {
             var userIds = await _context.UserGroups.Include(ug => ug.User).Where(ug => ug.GroupId == groupId).Select(ug => ug.UserId).ToArrayAsync();
             foreach (var userId in userIds)
             {
-                await _assignTask(userId, treeHeight);
+                await _assignTask(userId, treeHeight, max, template);
             }
             await _context.SaveChangesAsync();
             return Ok();
@@ -241,7 +216,7 @@ namespace AICourseTester.Controllers
 
         [DisableRateLimiting]
         [Authorize(Roles = "Administrator"), HttpPut("Users/{userId}/")]
-        public async Task<ActionResult> UpdateABTest(string userId, [System.Web.Http.FromUri] int? height = null, [System.Web.Http.FromUri] bool generate = false)
+        public async Task<ActionResult> UpdateABTest(string userId, int? height = null, int? maxValue = null, int? template = null, bool generate = false)
         {
             var ab = await _context.AlphaBeta.FirstOrDefaultAsync(f => f.UserId == userId);
             if (ab == null)
@@ -265,9 +240,11 @@ namespace AICourseTester.Controllers
             ab.Solution = null;
             ab.IsSolved = false;
             ab.Date = DateTime.Now;
+            ab.MaxValue = maxValue;
+            ab.Template = template;
             if (generate == true)
             {
-                var tree = AlphaBetaService.GenerateTree(ab.TreeHeight);
+                var tree = AlphaBetaService.GenerateTree3((int)ab.MaxValue, (int)ab.Template);
                 ab.Problem = tree.ToJson();
             }
             _context.AlphaBeta.Update(ab);

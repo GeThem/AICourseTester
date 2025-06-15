@@ -2,7 +2,9 @@
 using AICourseTester.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using System.Security.Cryptography;
+using System.Xml.Linq;
 
 namespace AICourseTester.Services
 {
@@ -96,7 +98,13 @@ namespace AICourseTester.Services
             {
                 return tree;
             }
-            _generateNodes(tree.Head, null, height - 1, tree.Head.Id);
+            int subNodesCount = random.Next(3, 6);
+            tree.Head.SubNodes = new(subNodesCount);
+            var id = tree.Head.Id;
+            foreach (var subNode in  tree.Head.SubNodes)
+            {
+                id = _generateNodes(subNode, null, height - 2, id + 1);
+            }
             return tree;
         }
 
@@ -115,7 +123,7 @@ namespace AICourseTester.Services
                 return id;
             }
             node.SubNodes = new List<ABNode>();
-            int lim = random.Next(2, 4);
+            int lim = random.Next(2, 5);
             for (int i = 0; i < lim; i++)
             {
                 node.SubNodes.Add(new ABNode());
@@ -125,6 +133,82 @@ namespace AICourseTester.Services
                 id = _generateNodes(subNode, node, height - 1, id + 1);
             }
             return id;
+        }
+
+        public static ProblemTree<ABNode> GenerateTree3(int maxValue, int template)
+        {
+            if (maxValue < 4 || template < 0 || template > 4)
+            {
+                throw new Exception("Invalid arguments");
+            }
+
+            ProblemTree<ABNode> tree = new ProblemTree<ABNode>();
+            tree.Head = new ABNode();
+            tree.Head.Id = 0;
+            int subNodesCount = random.Next(3, 6);
+            tree.Head.SubNodes = new();
+            for (int i = 0; i < subNodesCount; i++)
+            {
+                tree.Head.SubNodes.Add(new ABNode());
+            }
+            var id = tree.Head.Id;
+            int? max = int.MinValue;
+            int[] mins = new int[subNodesCount];
+            Array.Fill(mins, int.MaxValue);
+            
+            foreach (var (i, subNode) in tree.Head.SubNodes.Select((v, i) => (i, v)))
+            {
+                max = mins.Max();
+
+                subNode.Id = ++id;
+                subNode.prv = tree.Head;
+
+                int leavesCount = random.Next(3, 5);
+                subNode.SubNodes = new();
+                for (int k = 0; k < leavesCount; k++)
+                {
+                    subNode.SubNodes.Add(new ABNode());
+                }
+
+                var values = Enumerable.Range(1, maxValue).ToList();
+                foreach (var (j, leave) in subNode.SubNodes.Select((v, i) => (i, v)))    
+                {
+                    leave.Id = ++id;
+                    leave.prv = subNode;
+
+                    int value;
+                    if (template == 4)
+                    {
+                        value = random.Next(1, maxValue + 1);
+                    }
+                    else if (i == 0)
+                    {
+                        var idx = random.Next(1, values.Count);
+                        value = values[idx];
+                        values.RemoveAt(idx);                       
+                    }
+                    else if (i == 1 && template == 2)
+                    {
+                        value = random.Next(mins[0], maxValue + 1);
+                    }
+                    else if (template < 3)
+                    {
+                        value = random.Next(1, maxValue + 1);
+                        if (j == leavesCount - 2 && mins[template - 1] < mins[i])
+                        {
+                            value = random.Next(1, mins[template - 1] + 1);
+                        }
+                    } 
+                    else
+                    {
+                        value = j == leavesCount - 1 ? random.Next(1, maxValue + 1) : random.Next((int)max + 1, maxValue + 1);
+                    }
+                    mins[i] = Math.Min(mins[i], value);
+                    leave.A = value;
+                    leave.B = value;
+                }
+            }
+            return tree;
         }
     }
 }
