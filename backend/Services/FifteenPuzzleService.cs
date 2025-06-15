@@ -1,7 +1,5 @@
 ﻿using AICourseTester.Models;
 using Microsoft.IdentityModel.Tokens;
-using System.Formats.Tar;
-using System.Security.Cryptography;
 
 namespace AICourseTester.Services
 {

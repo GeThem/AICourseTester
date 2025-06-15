@@ -1,16 +1,10 @@
 ﻿using AICourseTester.Data;
 using AICourseTester.DTO;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.EntityFrameworkCore;
-using System;
+using AICourseTester.Models;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
-using AICourseTester.Models;
-using Azure.Core;
-using SixLabors.ImageSharp.Formats.Png;
 
 namespace AICourseTester.Services
 {

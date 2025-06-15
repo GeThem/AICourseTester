@@ -1,10 +1,6 @@
 ﻿using AICourseTester.DTO;
 using AICourseTester.Models;
 using Microsoft.CodeAnalysis;
-using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json.Linq;
-using System.Security.Cryptography;
-using System.Xml.Linq;
 
 namespace AICourseTester.Services
 {
