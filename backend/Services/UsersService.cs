@@ -33,6 +33,7 @@ namespace AICourseTester.Services
                     Name = u.u.Name,
                     SecondName = u.u.SecondName,
                     Patronymic = u.u.Patronymic,
+                    GroupId = u.u.GroupId,
                     Group = g.Name,
                     Pfp = Environment.GetEnvironmentVariable("LOCAL_URL").Split(";", StringSplitOptions.None)[0]
                         + $"/{u.u.PfpPath ?? "Images/Default.webp"}"
@@ -41,24 +42,14 @@ namespace AICourseTester.Services
         }
 
         public async Task<string> UploadPfp(string userId, IFormFile pfp)
-        {
-            var encoder = new PngEncoder();          
+        {     
             var pfpPath = $"Images/{userId}.png";
             var fullPath = Path.Combine(_webHostEnvironment.WebRootPath, pfpPath);
             using var ms = new MemoryStream();
             await pfp.CopyToAsync(ms);
             ms.Seek(0, SeekOrigin.Begin);
             using var input = Image.Load<Rgba32>(ms);
-            if (input.Width > 256 || input.Height > 256)
-            {
-                input.Mutate(x => x.Resize(new ResizeOptions(){
-                    Position = AnchorPositionMode.Center,
-                    Mode = ResizeMode.Crop,
-                    Size = new Size(256, 256),
-                    Sampler = KnownResamplers.Lanczos8
-                }));
-            }
-            await input.SaveAsync(fullPath, encoder);
+            await input.SaveAsync(fullPath);
             return pfpPath;
         }
 

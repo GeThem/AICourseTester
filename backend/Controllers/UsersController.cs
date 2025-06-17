@@ -73,17 +73,14 @@ namespace AICourseTester.Controllers
         }
 
         [EnableRateLimiting("token")]
-        [Authorize, HttpPut("{userId}")]
-        public async Task<ActionResult<IdentityResult>> UpdateUser(UserModifyDTO userNewData, string userId)
+        [Authorize, HttpPut("")]
+        public async Task<ActionResult<IdentityResult>> UpdateUser([FromForm] UserModifyDTO userNewData, string? userId)
         {
             var reqUser = await _userManager.GetUserAsync(User);
             var roles = await _userManager.GetRolesAsync(reqUser);
             if (roles.FirstOrDefault(r => r == "Administrator") == null)
             {
-                if (reqUser.Id != userId)
-                {
-                    return BadRequest();
-                }
+                userId = reqUser.Id;
             }
             var user = await _context.Users.FirstOrDefaultAsync(f => f.Id == userId);
             if (user == null)
@@ -94,7 +91,7 @@ namespace AICourseTester.Controllers
             {
                 user.PfpPath = await _usersService.UploadPfp(userId, userNewData.Pfp);
             }
-            if (userNewData.RemoveGroup)
+            if (userNewData.RemoveGroup == true)
             {
                 await _context.UserGroups.Where(ug => ug.UserId == userId).ExecuteDeleteAsync();
             }
@@ -113,7 +110,7 @@ namespace AICourseTester.Controllers
             }
             if (userNewData.Patronymic != null)
             {
-                user.Patronymic = userNewData.Patronymic;
+                user.Patronymic = userNewData.Patronymic == "-" ? null : userNewData.Patronymic;   
             }
             await _context.SaveChangesAsync();
             if (userNewData.UserName != null)
@@ -184,6 +181,7 @@ namespace AICourseTester.Controllers
                 Name = g.User.Name,
                 SecondName = g.User.SecondName,
                 Patronymic = g.User.Patronymic,
+                GroupId = g.GroupId,
                 Group = g.Group.Name
             }).ToArrayAsync();
             if (group.IsNullOrEmpty())
