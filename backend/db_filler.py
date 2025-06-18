@@ -15,7 +15,7 @@ import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-n', '--user-hundreds', default=2, type=int)
-parser.add_argument('-l', '--groups-list', default='ИВТ-1, ИВТ-2, ПРИ', type=str)
+parser.add_argument('-l', '--groups-list', default=None, type=str)
 parser.add_argument('-dg', '--dont-generate', action='store_true')
 parser.add_argument('-c', '--clear-db', action='store_true')
 parser.add_argument('-da', '--dont-assign-tasks', action='store_true')
@@ -35,7 +35,7 @@ if args.login == 'admin':
         args.login = login
 
 USER_HUNDREDS_TO_GENERATE: int = min(args.user_hundreds, 6)  # How many hundreds of users will be generated
-group_names = args.groups_list.split(' ')
+group_names = None if args.groups_list is None else args.groups_list.split(' ')
 
 
 def get_names():
@@ -68,7 +68,7 @@ login_data = response.json()
 
 async def fetch(method: Callable, url: Union[str, URL], return_response=False, **kwargs):
     async with method(url,
-                      headers={'Authorization': f'{login_data['tokenType']} {login_data['accessToken']}',
+                      headers={'Authorization': f"{login_data['tokenType']} {login_data['accessToken']}",
                                'Content-Type': 'application/json'},
                       **kwargs) as response:
         if not return_response:
@@ -118,7 +118,8 @@ async def main():
                 user_ids = tuple(map(lambda x: x['id'], user_ids))
             await fetch(session.delete, f"https://localhost:7169/api/Users", json=user_ids)
         if not args.dont_generate:
-            await post_all_groups(session, group_names)
+            if group_names is not None:
+                await post_all_groups(session, group_names)
             group_ids = tuple(map(lambda x: x['id'], await fetch(session.get, 'https://localhost:7169/api/Users/Groups', return_response=True)))
             await post_all_users(session, names, group_ids)
         if not args.dont_assign_tasks:
