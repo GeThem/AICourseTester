@@ -90,8 +90,9 @@ async def post_all_users(session: ClientSession, names: Sequence[tuple[str, str,
     start = 0 if start is None else len(start)
     tasks = (fetch(session.post, "https://localhost:7169/api/Users/Register",
                    json={"userName": f"User{i}", "password": "Abc123-",
-                         "secondName": name[0], "name": name[1], "patronymic": name[2],
-                         "groupId": random.choice(group_ids)}) for i, name in enumerate(names, start=start+1))
+                         "secondName": second_name, "name": name, "patronymic": patronymic,
+                         "groupId": None if len(group_ids) == 0 else random.choice(group_ids)})
+             for i, (second_name, name, patronymic) in enumerate(names, start=start+1))
     await asyncio.gather(*tasks)
 
 async def assign_ab_tasks(session: ClientSession, user_ids: Sequence[str]):
@@ -118,10 +119,16 @@ async def main():
             if user_ids is not None:
                 user_ids = tuple(map(lambda x: x['id'], user_ids))
             await fetch(session.delete, f"https://localhost:7169/api/Users", json=user_ids)
+            group_ids = await fetch(session.get, 'https://localhost:7169/api/Users/Groups', return_response=True)
+            if group_ids is not None:
+                group_ids = tuple(map(lambda x: x['id'], group_ids)) + (None,)
+            await fetch(session.delete, f"https://localhost:7169/api/Users/Groups", json=group_ids)
         if not args.dont_generate:
             if group_names is not None:
                 await post_all_groups(session, group_names)
-            group_ids = tuple(map(lambda x: x['id'], await fetch(session.get, 'https://localhost:7169/api/Users/Groups', return_response=True)))
+            group_ids = await fetch(session.get, 'https://localhost:7169/api/Users/Groups', return_response=True)
+            if group_ids is not None:
+                group_ids = tuple(map(lambda x: x['id'], group_ids))
             await post_all_users(session, names, group_ids)
         if not args.dont_assign_tasks:
             user_ids = await fetch(session.get, 'https://localhost:7169/api/Users', return_response=True)
