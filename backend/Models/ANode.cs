@@ -5,9 +5,8 @@ namespace AICourseTester.Models
 {
     public class ANode : Node<ANode>
     {
-        [JsonIgnore]
         [Newtonsoft.Json.JsonIgnore]
-        public int depth = 0;
+        public int depth { get; set; } = 0;
         [JsonIgnore]
         [Newtonsoft.Json.JsonIgnore]
         public ANode? prv { get; set; } = null;
