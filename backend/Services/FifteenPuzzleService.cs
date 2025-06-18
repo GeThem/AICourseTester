@@ -46,9 +46,13 @@ namespace AICourseTester.Services
                 {
                     directions.Add(((P0 + 1) % dimensions, P0 / dimensions));
                 }
-                if (i != iters - 1)
+                if (i != iters - 2)
                 {
                     directions.Remove((0, 0));
+                }
+                if (directions.IsNullOrEmpty())
+                {
+                    break;
                 }
                 var tile = directions[random.Next(0, directions.Count)];
                 aNode.State[tile.y][tile.x] = P0;
@@ -198,6 +202,10 @@ namespace AICourseTester.Services
                         (Di, Ai) = (Ai, Di);
                     }
                     vals = Di.isSide ? vals = CollectCollumns(AColumns, range, true) : CollectRows(ARows, range, true);
+                    if (vals.IsNullOrEmpty())
+                    {
+                        vals = CollectRows([true, true, true], range);
+                    }
                     pos = vals[random.Next(0, vals.Count)];
                     value = range[pos.y][pos.x];
                     range[pos.y][pos.x] = 0;

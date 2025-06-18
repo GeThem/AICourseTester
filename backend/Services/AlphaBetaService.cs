@@ -154,7 +154,7 @@ namespace AICourseTester.Services
             
             foreach (var (i, subNode) in tree.Head.SubNodes.Select((v, i) => (i, v)))
             {
-                max = mins.Max();
+                max = mins.Where(n => n != int.MaxValue).OrderDescending().FirstOrDefault();
 
                 subNode.Id = ++id;
                 subNode.prv = tree.Head;

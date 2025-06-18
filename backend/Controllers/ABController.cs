@@ -64,7 +64,10 @@ namespace AICourseTester.Controllers
             }
             if (ab.Problem == null)
             {
-                return NotFound();
+                var problemInner = AlphaBetaService.GenerateTree3((int)ab.MaxValue, (int)ab.Template);
+                ab.Problem = problemInner.ToJson();
+                _context.Update(ab);
+                await _context.SaveChangesAsync();
             }
             return new AlphaBetaDTO()
             {
@@ -124,8 +127,6 @@ namespace AICourseTester.Controllers
             ab.Template = template;
             ab.MaxValue = maxValue;
 
-            var problemInner = AlphaBetaService.GenerateTree3((int)ab.MaxValue, (int)ab.Template);
-            ab.Problem = problemInner.ToJson();
             _context.AlphaBeta.Update(ab);
             return true;
         }

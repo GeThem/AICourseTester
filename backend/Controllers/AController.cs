@@ -67,7 +67,10 @@ namespace AICourseTester.Controllers
             }
             if (fp.Problem == null)
             {
-                return NotFound();
+                var aNode = FifteenPuzzleService.GenerateState(fp.TreeHeight, (int)fp.Heuristic, fp.Dimensions);
+                fp.Problem = aNode.State.ToJson();
+                _context.Fifteens.Update(fp);
+                await _context.SaveChangesAsync();
             }
             var (_, list) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight);
             return new FifteenPuzzleResponse() { Problem = list };
@@ -110,9 +113,8 @@ namespace AICourseTester.Controllers
             var fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == userId);
             if (fp == null)
             {
-                _context.Fifteens.Add(new FifteenPuzzle() { UserId = userId });
+                fp = _context.Fifteens.Add(new FifteenPuzzle() { UserId = userId }).Entity;
                 await _context.SaveChangesAsync();
-                fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == _userManager.GetUserId(User));
             }
             fp.Heuristic = heuristic;
             fp.Dimensions = dimensions;
@@ -122,10 +124,6 @@ namespace AICourseTester.Controllers
             fp.IsSolved = false;
             fp.Date = DateTime.Now;
             
-            var aNode = FifteenPuzzleService.GenerateState(treeHeight, heuristic, dimensions);
-            var (_, listInner) = FifteenPuzzleService.GenerateTree(aNode, treeHeight);
-
-            fp.Problem = aNode.State.ToJson();
             _context.Fifteens.Update(fp);
             return true;
         }

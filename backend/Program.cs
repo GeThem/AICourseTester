@@ -20,7 +20,7 @@ builder.Services.AddCors(options =>
                       {
                           if (builder.Environment.IsDevelopment())
                           {
-                              policy.SetIsOriginAllowed(origin => new Uri(origin).IsLoopback).AllowAnyHeader().AllowAnyMethod();
+                              policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
                           }
                           else
                           {
