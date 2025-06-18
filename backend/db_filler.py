@@ -70,6 +70,7 @@ async def fetch(method: Callable, url: Union[str, URL], return_response=False, *
     async with method(url,
                       headers={'Authorization': f"{login_data['tokenType']} {login_data['accessToken']}",
                                'Content-Type': 'application/json'},
+                      ssl=False,
                       **kwargs) as response:
         if not return_response:
             return
