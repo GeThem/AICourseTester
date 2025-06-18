@@ -14,7 +14,7 @@ namespace AICourseTester.Services
             {
                 return GenerateStateH1(dimensions, iters);
             }
-            return GenerateStateH2(iters);
+            return GenerateStateH2(Math.Min(iters, 3));
         }
         public static ANode GenerateStateH1(int dimensions, int iters)
         {
