@@ -431,6 +431,18 @@ namespace AICourseTester.Services
             return null;
         }
 
+        private static int GetTreeIters(ProblemTree<ANode> tree)
+        {
+            int iters = 0;
+            ANode curr = tree.Head;
+            while (curr.SubNodes != null)
+            {
+                iters++;
+                curr = curr.SubNodes[0];
+            }
+            return iters;
+        }
+
         public static List<ANodeDTO> Search(ProblemTree<ANode> tree, Func<ANode, int> h)
         {
             OrderedSet<ANode> openNodes = new(state => state.F)
@@ -442,8 +454,10 @@ namespace AICourseTester.Services
             tree.Head.F = tree.Head.G + tree.Head.H;
             HashSet<ANode> closedNodes = new();
 
-            while (openNodes.Count > 0)
+            int iters = GetTreeIters(tree);
+            while (iters >= 0 && openNodes.Count > 0)
             {
+                iters--;
                 var curr = openNodes.Pop();
                 if (curr.F - curr.G == 0)
                 {
@@ -497,17 +511,17 @@ namespace AICourseTester.Services
             return closedNodes.Select(n => new ANodeDTO(n)).ToList();
         }
 
-        public static (ProblemTree<ANode>, List<ANode>) GenerateTree(ANode startState, int height)
+        public static (ProblemTree<ANode>, List<ANode>) GenerateTree(ANode startState, int iters)
         {
             ProblemTree<ANode> tree = new ProblemTree<ANode>();
             tree.Head = startState;
             tree.Head.Id = 0;
             List<ANode> ignore = new() { tree.Head };
-            if (height <= 1)
+            if (iters <= 1)
             {
                 return (tree, ignore);
             }
-            _generateNodes(tree.Head, height - 1, ignore, tree.Head.Id);
+            _generateNodes(tree.Head, iters - 2, ignore, tree.Head.Id);
             return (tree, ignore);
         }
 
