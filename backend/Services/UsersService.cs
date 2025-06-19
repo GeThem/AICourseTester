@@ -1,10 +1,7 @@
 ﻿using AICourseTester.Data;
 using AICourseTester.DTO;
 using AICourseTester.Models;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
 
 namespace AICourseTester.Services
 {

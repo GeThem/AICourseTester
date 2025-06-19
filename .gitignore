@@ -6,3 +6,4 @@ backend/wwwroot/Images/*
 backend/wwwroot/is-cache
 !backend/wwwroot/Images/Default.webp
 !db_filler.py
+/backend/Properties/PublishProfiles

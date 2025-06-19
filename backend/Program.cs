@@ -188,4 +188,6 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.Urls.Add(Environment.GetEnvironmentVariable("LOCAL_URL_HTTP"));
+app.Urls.Add(Environment.GetEnvironmentVariable("LOCAL_URL_HTTPS"));
 app.Run();
