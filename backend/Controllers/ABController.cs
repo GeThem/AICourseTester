@@ -180,8 +180,6 @@ namespace AICourseTester.Controllers
                     Task = new AlphaBetaDTO 
                     {
                         Problem = ab.Problem == null ? null : ab.Problem.FromJson<ProblemTree<ABNode>>(),
-                        UserSolution = null,
-                        Solution = null,
                         TreeHeight = ab.TreeHeight,
                         Date = ab.Date,
                         IsSolved = ab.IsSolved
@@ -202,12 +200,15 @@ namespace AICourseTester.Controllers
                 {
                     Task = new AlphaBetaDTO
                     {
+                        Id = ab.Id,
                         Problem = ab.Problem == null ? null : ab.Problem.FromJson<ProblemTree<ABNode>>(),
-                        UserSolution = ab.UserSolution == null ? null : ab.UserSolution.FromJson<List<ABNodeDTO>>(),
                         Solution = ab.Solution == null ? null : ab.Solution.FromJson<List<ABNodeDTO>>(),
-                        TreeHeight = ab.TreeHeight,
+                        UserSolution = ab.UserSolution == null ? null : ab.UserSolution.FromJson<List<ABNodeDTO>>(),
+                        Path = ab.Path == null ? null : ab.Path.FromJson<int[]>(),
+                        UserPath = ab.UserPath == null ? null : ab.UserPath.FromJson<int[]>(),
                         Date = ab.Date,
-                        IsSolved = ab.IsSolved
+                        IsSolved = ab.IsSolved,
+                        TreeHeight = ab.TreeHeight,
                     },
                     User = u
                 });
