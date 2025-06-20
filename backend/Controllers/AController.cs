@@ -51,7 +51,7 @@ namespace AICourseTester.Controllers
         }
 
         [Authorize, HttpGet("FifteenPuzzle/Test")]
-        public async Task<ActionResult<FifteenPuzzleResponse>> GetFPTest()
+        public async Task<ActionResult<FifteenPuzzleDTO>> GetFPTest()
         {
             var fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == _userManager.GetUserId(User));
             if (fp == null)
@@ -63,7 +63,17 @@ namespace AICourseTester.Controllers
                 var (_, problem) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight);
                 var solution = fp.Solution.FromJson<List<ANodeDTO>>();
                 var userSolution = fp.UserSolution.FromJson<List<ANodeDTO>>();
-                return new FifteenPuzzleResponse() { Problem = problem, Solution = solution, UserSolution = userSolution };
+                return new FifteenPuzzleDTO() 
+                { 
+                    Problem = problem, 
+                    Solution = solution, 
+                    UserSolution = userSolution, 
+                    Date = fp.Date,
+                    IsSolved = fp.IsSolved,
+                    Heuristic = fp.Heuristic,
+                    Dimensions = fp.Dimensions,
+                    TreeHeight = fp.TreeHeight,
+                };
             }
             if (fp.Problem == null)
             {
@@ -73,11 +83,19 @@ namespace AICourseTester.Controllers
                 await _context.SaveChangesAsync();
             }
             var (_, list) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight);
-            return new FifteenPuzzleResponse() { Problem = list };
+            return new FifteenPuzzleDTO()
+            {
+                Problem = list,
+                Date = fp.Date,
+                IsSolved = fp.IsSolved,
+                Heuristic = fp.Heuristic,
+                Dimensions = fp.Dimensions,
+                TreeHeight = fp.TreeHeight,
+            };
         }
 
         [Authorize, HttpPost("FifteenPuzzle/Test")]
-        public async Task<ActionResult<FifteenPuzzleResponse>> PostFPTestVerify(List<ANodeDTO> userSolution)
+        public async Task<ActionResult<List<ANodeDTO>>> PostFPTestVerify(List<ANodeDTO> userSolution)
         {
             var fp = await _context.Fifteens.FirstOrDefaultAsync(f => f.UserId == _userManager.GetUserId(User));
             if (fp == null)
@@ -86,22 +104,18 @@ namespace AICourseTester.Controllers
             }
             if (fp.IsSolved)
             {
-                return new FifteenPuzzleResponse() { Solution = fp.Solution.FromJson<List<ANodeDTO>>() };
+                return fp.Solution.FromJson<List<ANodeDTO>>();
             }
             var (problemTree, problem) = FifteenPuzzleService.GenerateTree(new ANode() { State = fp.Problem.FromJson<int[][]>() }, fp.TreeHeight);
 
             fp.UserSolution = userSolution.ToJson();
-            //if (fp.Heuristic == null)
-            //{
-            //    fp.Heuristic = RandomNumberGenerator.GetInt32(2) + 1;
-            //}
             var solution = FifteenPuzzleService.Search(problemTree, FifteenPuzzleService.Heuristics[(int)fp.Heuristic - 1]);
             fp.Solution = solution.ToJson();
             fp.IsSolved = true;
 
             _context.Fifteens.Update(fp);
             await _context.SaveChangesAsync();
-            return new FifteenPuzzleResponse() { Solution = solution };
+            return solution;
         }
 
         private async Task<bool> _assignTask(string userId, int heuristic, int dimensions, int iters)
