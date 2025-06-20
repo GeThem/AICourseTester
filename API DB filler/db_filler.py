@@ -3,7 +3,7 @@ import random
 import aiohttp
 import asyncio
 from aiohttp import ClientSession
-from typing import Union, Sequence, Callable
+from typing import Sequence, Callable
 from yarl import URL
 from threading import Thread
 from selenium import webdriver
@@ -37,6 +37,11 @@ if args.login == 'admin':
 USER_HUNDREDS_TO_GENERATE: int = min(args.user_hundreds, 6)  # How many hundreds of users will be generated
 group_names = None if args.groups_list is None else args.groups_list.split(' ')
 
+response = requests.post("https://localhost:7169/api/Users/Login",
+                         json={"userName": args.login, "password": args.password},
+                         verify=False)
+login_data = response.json()
+
 
 def get_names():
     global names
@@ -60,13 +65,7 @@ if not args.dont_generate:
     [thread.join() for thread in threads]
     names = list(map(lambda x: x.split(" "), '\n'.join(names).split('\n')))
 
-response = requests.post("https://localhost:7169/api/Users/Login",
-                         json={"userName": args.login, "password": args.password},
-                         verify=False)
-login_data = response.json()
-
-
-async def fetch(method: Callable, url: Union[str, URL], return_response=False, **kwargs):
+async def fetch(method: Callable, url: str | URL, return_response=False, **kwargs):
     async with method(url,
                       headers={'Authorization': f"{login_data['tokenType']} {login_data['accessToken']}",
                                'Content-Type': 'application/json'},

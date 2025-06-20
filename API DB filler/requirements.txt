@@ -1,0 +1,4 @@
+aiohttp==3.12.13
+Requests==2.32.4
+selenium==4.33.0
+yarl==1.17.1
