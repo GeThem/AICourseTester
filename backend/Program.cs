@@ -35,10 +35,12 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
+string connString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? builder.Configuration.GetConnectionString("main_db");
 builder.Services.AddDbContext<MainDbContext>(options =>
 {
     options
-    .UseNpgsql(builder.Configuration.GetConnectionString("main_db"));
+    .UseNpgsql(connString);
 });
 builder.Services.AddTransient<UsersService>();
 
@@ -142,15 +144,11 @@ using (var scope = app.Services.CreateScope())
     var userStore = scope.ServiceProvider.GetRequiredService<IUserStore<ApplicationUser>>();
     var ctx = scope.ServiceProvider.GetRequiredService<MainDbContext>();
 
-    string? userName = builder.Configuration["Admin:UserName"];
-    if (userName == null)
-    {
-        userName = "admin";
-    }
-    var password = ((string?[])[builder.Configuration["Admin:Password"], builder.Configuration["Admin:Pw"]]).FirstOrDefault(pw => pw != null);
+    string? userName = Environment.GetEnvironmentVariable("ADMIN_USERNAME") ?? builder.Configuration["Admin:UserName"] ?? "admin";
+    var password = builder.Configuration["Admin:Password"] ?? builder.Configuration["Admin:Pw"] ?? Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
     if (password == null)
     {
-        throw new Exception("Provide password for admin - secrets.json / appsettings.json:\n\t\"Admin\": { {\"Password\" | \"Pw\"}: \"<password>\"[, \"UserName\": \"<username>\"] }");
+        throw new Exception("Provide password for admin");
     }
 
     ApplicationUser? user = await userManager.FindByNameAsync(userName);
