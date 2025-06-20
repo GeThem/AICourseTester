@@ -16,24 +16,26 @@ namespace AICourseTester.Services
             _webHostEnvironment = webHostEnvironment;
         }
 
-        public IQueryable<UserDTO> UserLeftJoinGroup(string? userId = null)
+        public IQueryable<UserDTO> UserLeftJoinGroup(string? userId = null, bool getUserNames = false, bool getPfp = false)
         {
             var start = userId == null ? _context.Users.Where(u => u.NormalizedUserName != "ADMIN")
                 : _context.Users.Where(u => u.Id == userId);
             var result = start
                 .GroupJoin(_context.UserGroups, u => u.Id, g => g.UserId, (u, g) => new { u, g })
-                .SelectMany(ug => ug.g.DefaultIfEmpty(), (u, g) => new { u.u.Id, u.u.Name, u.u.SecondName, u.u.Patronymic, g.GroupId, u.u.PfpPath })
+                .SelectMany(ug => ug.g.DefaultIfEmpty(), (u, g) => new { u.u.Id, u.u.UserName, u.u.Name, u.u.SecondName, u.u.Patronymic, g.GroupId, u.u.PfpPath })
                 .GroupJoin(_context.Groups, u => u.GroupId, g => g.Id, (u, g) => new { u, g })
                 .SelectMany(ug => ug.g.DefaultIfEmpty(), (u, g) => new UserDTO
                 {
                     Id = u.u.Id,
+                    UserName = getUserNames ? u.u.UserName : null,
                     Name = u.u.Name,
                     SecondName = u.u.SecondName,
                     Patronymic = u.u.Patronymic,
                     GroupId = u.u.GroupId,
                     Group = g.Name,
-                    Pfp = Environment.GetEnvironmentVariable("LOCAL_URL").Split(";", StringSplitOptions.None)[0]
+                    Pfp = getPfp ? Environment.GetEnvironmentVariable("LOCAL_URL").Split(";", StringSplitOptions.None)[0]
                         + $"/{u.u.PfpPath ?? "Images/Default.webp"}"
+                        : null
                 });
             return result;
         }
