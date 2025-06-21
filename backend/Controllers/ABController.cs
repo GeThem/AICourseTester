@@ -28,8 +28,12 @@ namespace AICourseTester.Controllers
         }
 
         [HttpGet("Train")]
-        public ProblemTree<ABNode> GetABTrain(int depth = 3, int max = 15, int template = 1)
+        public ActionResult<ProblemTree<ABNode>> GetABTrain(int depth = 3, int max = 15, int template = 1)
         {
+            if (max < 4 || template < 1 || template > 4)
+            {
+                return BadRequest();
+            }
             var tree = AlphaBetaService.GenerateTree3(max, template);
             return tree;
         }

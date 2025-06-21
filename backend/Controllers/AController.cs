@@ -29,11 +29,16 @@ namespace AICourseTester.Controllers
         }
 
         [HttpGet("FifteenPuzzle/Train")]
-        public List<ANode> GetFPTrain(int heuristic = 1, int iters = 3, int dimensions = 3)
+        public ActionResult<List<ANode>> GetFPTrain(int heuristic = 1, int iters = 3, int dimensions = 3)
         {
-            var aNode = FifteenPuzzleService.GenerateState(iters, heuristic, dimensions);
+            if (heuristic < 1 || heuristic > 2 || iters < 1 || dimensions < 1)
+            {
+                return BadRequest();
+            }
+
             //ANode aNode = new ANode(dimensions);
             //FifteenPuzzleService.ShuffleState(aNode);
+            var aNode = FifteenPuzzleService.GenerateState(iters, heuristic, dimensions);
             var (_, list) = FifteenPuzzleService.GenerateTree(aNode, iters);
             return list;
         }
