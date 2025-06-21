@@ -517,11 +517,11 @@ namespace AICourseTester.Services
             tree.Head = startState;
             tree.Head.Id = 0;
             List<ANode> ignore = new() { tree.Head };
-            if (iters <= 1)
+            if (iters < 1)
             {
                 return (tree, ignore);
             }
-            _generateNodes(tree.Head, iters - 2, ignore, tree.Head.Id);
+            _generateNodes(tree.Head, iters, ignore, tree.Head.Id);
             return (tree, ignore);
         }
 
