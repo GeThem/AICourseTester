@@ -21,7 +21,11 @@ builder.Services.AddCors(options =>
                           }
                           else
                           {
-                              policy.SetIsOriginAllowed(origin => new Uri(origin).IsLoopback).AllowAnyHeader().AllowAnyMethod();
+                              var front_url = Environment.GetEnvironmentVariable("FRONTEND_URL");
+                              policy
+                              //.SetIsOriginAllowed(origin => new Uri(origin).IsLoopback)
+                              .WithOrigins(front_url ?? "http://aistester.com", "http://localhost:5533")
+                              .AllowAnyHeader().AllowAnyMethod();
                           }
                       });
 });
