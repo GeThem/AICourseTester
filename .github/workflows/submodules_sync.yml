@@ -6,6 +6,8 @@ on:
 
 jobs:
   sync:
+    permissions:
+        contents: write
     name: 'Submodules Sync'
     runs-on: ubuntu-latest
 
