@@ -36,7 +36,7 @@ namespace AICourseTester.Services
                     Pfp = getPfp ? Environment.GetEnvironmentVariable("LOCAL_URL").Split(";", StringSplitOptions.None)[0]
                         + $"/{u.u.PfpPath ?? "Images/Default.webp"}"
                         : null
-                });
+                }).OrderBy(u => u.Group);
             return result;
         }
 
