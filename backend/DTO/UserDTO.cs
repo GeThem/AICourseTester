@@ -18,5 +18,7 @@ namespace AICourseTester.DTO
         public string? Group { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? Pfp { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public bool? IsAdmin { get; set; }
     }
 }

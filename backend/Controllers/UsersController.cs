@@ -44,13 +44,18 @@ namespace AICourseTester.Controllers
 
         [EnableRateLimiting("token")]
         [Authorize, HttpGet]
-        public async Task<ActionResult<UserDTO[]>> GetUsers()
+        public async Task<ActionResult<UserDTO[]>> GetUsers(bool getSelf = false)
         {
             var reqUser = await _userManager.GetUserAsync(User);
             var roles = await _userManager.GetRolesAsync(reqUser);
-            if (roles.FirstOrDefault(r => r == "Administrator") == null)
+            var isAdmin = roles.FirstOrDefault(r => r == "Administrator") != null;
+            if (getSelf || !isAdmin)
             {
                 var user = await _usersService.UserLeftJoinGroup(reqUser.Id, true, true).ToArrayAsync();
+                if (isAdmin)
+                {
+                    user[0].IsAdmin = isAdmin;
+                }
                 return user;
             }
             var users = _usersService.UserLeftJoinGroup();
