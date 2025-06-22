@@ -15,9 +15,11 @@ import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-n', '--user-hundreds', default=2, type=int)
-parser.add_argument('-l', '--groups-list', default=None, type=str)
+parser.add_argument('-gl', '--groups-list', default=None, type=str)  # "group1,group2,..."
 parser.add_argument('-dg', '--dont-generate', action='store_true')
-parser.add_argument('-c', '--clear-db', action='store_true')
+parser.add_argument('-cu', '--clear-users', action='store_true')
+parser.add_argument('-cg', '--clear-groups', action='store_true')
+parser.add_argument('-ct', '--clear-tasks', action='store_true')
 parser.add_argument('-da', '--dont-assign-tasks', action='store_true')
 parser.add_argument('-u', '--login', default='admin', type=str)
 parser.add_argument('-p', '--password', type=str)
@@ -35,7 +37,7 @@ if args.login == 'admin':
         args.login = login
 
 USER_HUNDREDS_TO_GENERATE: int = min(args.user_hundreds, 6)  # How many hundreds of users will be generated
-group_names = None if args.groups_list is None else args.groups_list.split(' ')
+group_names = None if args.groups_list is None else args.groups_list.split(',')
 
 response = requests.post("https://localhost:7169/api/Users/Login",
                          json={"userName": args.login, "password": args.password},
@@ -84,56 +86,67 @@ async def post_all_groups(session: ClientSession, groups: Sequence[str]):
     await asyncio.gather(*tasks)
 
 
-async def post_all_users(session: ClientSession, names: Sequence[tuple[str, str, str]], group_ids: Sequence[int | str]):
+async def post_all_users(session: ClientSession, names: Sequence[tuple[str, str, str]], groups: Sequence[dict]):
     start = await fetch(session.get, 'https://localhost:7169/api/Users', return_response=True)
     start = 0 if start is None else len(start)
     tasks = (fetch(session.post, "https://localhost:7169/api/Users/Register",
                    json={"userName": f"User{i}", "password": "Abc123-",
                          "secondName": second_name, "name": name, "patronymic": patronymic,
-                         "groupId": None if len(group_ids) == 0 else random.choice(group_ids)})
+                         "groupId": None if len(groups) == 0 else random.choice(groups)["id"]})
              for i, (second_name, name, patronymic) in enumerate(names, start=start+1))
     await asyncio.gather(*tasks)
 
-async def assign_ab_tasks(session: ClientSession, user_ids: Sequence[str]):
-    tasks = (fetch(session.post, f'https://localhost:7169/api/AB/Users/{userId}/Assign'
+
+async def assign_ab_tasks(session: ClientSession, users: None | Sequence[dict]):
+    if users is None:
+        return
+    tasks = (fetch(session.post, f'https://localhost:7169/api/AB/Users/{user["id"]}/Assign'
                                 f'?template={random.randint(1, 4)}'
                                 f'&max={random.randint(10, 50)}')
-             for userId in user_ids)
+             for user in users)
     await asyncio.gather(*tasks)
 
 
-async def assign_a_tasks(session: ClientSession, user_ids: Sequence[str]):
-    tasks = (fetch(session.post, f'https://localhost:7169/api/A/FifteenPuzzle/Users/{userId}/Assign'
+async def assign_a_tasks(session: ClientSession, users: None | Sequence[dict]):
+    if users is None:
+        return
+    tasks = (fetch(session.post, f'https://localhost:7169/api/A/FifteenPuzzle/Users/{user["id"]}/Assign'
                                 f'?dimensions={random.randint(3, 4)}'
                                 f'&treeHeight={random.randint(3, 5)}'
                                 f'&heuristic={random.randint(1, 2)}')
-             for userId in user_ids)
+             for user in users)
     await asyncio.gather(*tasks)
+
+
+async def delete_all_tasks(session: ClientSession, users: Sequence[dict]):
+    a_tasks = (fetch(session.delete, f"https://localhost:7169/api/A/FifteenPuzzle/Users/{user['id']}") for user in users)
+    ab_tasks = (fetch(session.delete, f"https://localhost:7169/api/AB/Users/{user['id']}") for user in users)
+    await asyncio.gather(*a_tasks, *ab_tasks)
 
 
 async def main():
     async with aiohttp.ClientSession() as session:
-        if args.clear_db:
+        if args.clear_users:
             user_ids = await fetch(session.get, 'https://localhost:7169/api/Users', return_response=True)
             if user_ids is not None:
                 user_ids = tuple(map(lambda x: x['id'], user_ids))
             await fetch(session.delete, f"https://localhost:7169/api/Users", json=user_ids)
+        if args.clear_groups:
             group_ids = await fetch(session.get, 'https://localhost:7169/api/Users/Groups', return_response=True)
             if group_ids is not None:
-                group_ids = tuple(map(lambda x: x['id'], group_ids)) + (None,)
+                group_ids = tuple(map(lambda x: x['id'], group_ids))
             await fetch(session.delete, f"https://localhost:7169/api/Users/Groups", json=group_ids)
+        if args.clear_tasks:
+            users = await fetch(session.get, 'https://localhost:7169/api/Users', return_response=True)
+            await delete_all_tasks(session, users)
         if not args.dont_generate:
             if group_names is not None:
                 await post_all_groups(session, group_names)
             group_ids = await fetch(session.get, 'https://localhost:7169/api/Users/Groups', return_response=True)
-            if group_ids is not None:
-                group_ids = tuple(map(lambda x: x['id'], group_ids))
             await post_all_users(session, names, group_ids)
         if not args.dont_assign_tasks:
-            user_ids = await fetch(session.get, 'https://localhost:7169/api/Users', return_response=True)
-            if user_ids is not None:
-                user_ids = tuple(map(lambda x: x['id'], user_ids))
-            await asyncio.gather(assign_ab_tasks(session, user_ids), assign_a_tasks(session, user_ids))
+            users = await fetch(session.get, 'https://localhost:7169/api/Users', return_response=True)
+            await asyncio.gather(assign_ab_tasks(session, users), assign_a_tasks(session, users))
 
 
 asyncio.run(main())
