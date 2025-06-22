@@ -1,5 +1,4 @@
-﻿using AICourseTester.Data;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace AICourseTester.Models
 {

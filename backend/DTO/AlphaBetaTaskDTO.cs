@@ -1,6 +1,4 @@
-﻿using AICourseTester.Models;
-
-namespace AICourseTester.DTO
+﻿namespace AICourseTester.DTO
 {
     public class AlphaBetaTaskDTO
     {

@@ -1,8 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
 using AICourseTester.Models;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace AICourseTester.Data
 {
