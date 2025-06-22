@@ -318,7 +318,7 @@ namespace AICourseTester.Controllers
         }
 
         [EnableRateLimiting("token")]
-        [Authorize, HttpPost("Refresh")]
+        [HttpPost("Refresh")]
         public async Task<Results<Ok<AccessTokenResponse>, UnauthorizedHttpResult, SignInHttpResult, ChallengeHttpResult>> RefreshToken([FromBody] RefreshRequest refreshRequest)
         {
 
