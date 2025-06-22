@@ -452,22 +452,23 @@ namespace AICourseTester.Services
             tree.Head.G = 0;
             tree.Head.H = h(tree.Head);
             tree.Head.F = tree.Head.G + tree.Head.H;
-            HashSet<ANode> closedNodes = new();
+            OrderedSet<ANode> closedNodes = new();
 
             int iters = GetTreeIters(tree);
-            while (iters >= 0 && openNodes.Count > 0)
+            while (iters > 0 && openNodes.Count > 0)
             {
                 iters--;
                 var curr = openNodes.Pop();
                 if (curr.F - curr.G == 0)
                 {
                     closedNodes.Add(curr);
-                    return closedNodes.Select(n => new ANodeDTO(n)).ToList();
+                    return closedNodes.Select((n, i) => new ANodeDTO(n, i)).Concat(openNodes.Select(n => new ANodeDTO(n))).ToList();
                 }
+
                 closedNodes.Add(curr);
                 if (curr.SubNodes == null)
                 {
-                    return closedNodes.Select(n => new ANodeDTO(n)).ToList();
+                    return closedNodes.Select((n, i) => new ANodeDTO(n, i)).Concat(openNodes.Select(n => new ANodeDTO(n))).ToList();
                 }
                 foreach (var state in curr.SubNodes)
                 {
@@ -485,7 +486,7 @@ namespace AICourseTester.Services
                         }
                         continue;
                     }
-                    closedNodes.TryGetValue(state, out item);
+                    item = closedNodes.GetItem(state);
                     if (item != null)
                     {
                         var H = h(state);
@@ -508,7 +509,7 @@ namespace AICourseTester.Services
                     openNodes.Add(state);
                 }
             }
-            return closedNodes.Select(n => new ANodeDTO(n)).ToList();
+            return closedNodes.Select((n, i) => new ANodeDTO(n, i)).Concat(openNodes.Select(n => new ANodeDTO(n))).ToList();
         }
 
         public static (ProblemTree<ANode>, List<ANode>) GenerateTree(ANode startState, int iters)

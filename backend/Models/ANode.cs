@@ -84,14 +84,16 @@ namespace AICourseTester.Models
         public int G { get; set; } = -1;
         public int H { get; set; } = -1;
         public int F { get; set; } = -1;
+        public int OpenOrder {  get; set; } = -1;
 
         public ANodeDTO() { }
-        public ANodeDTO(ANode node)
+        public ANodeDTO(ANode node, int order = -1)
         {
             Id = node.Id;
             G = node.G;
             H = node.H;
             F = node.F;
+            OpenOrder = order;
         }
     }
 }

@@ -5,8 +5,10 @@ public class OrderedSet<T> : ICollection<T>
 {
     private readonly IDictionary<T, LinkedListNode<T>> m_Dictionary;
     private readonly LinkedList<T> m_LinkedList;
-    private readonly Func<T, IComparable> sortKey;
-    
+    private readonly Func<T, IComparable>? sortKey;
+
+    public OrderedSet() : this(EqualityComparer<T>.Default) { }
+
     public OrderedSet(Func<T, IComparable> sortKey)
         : this(EqualityComparer<T>.Default)
     {
@@ -30,7 +32,13 @@ public class OrderedSet<T> : ICollection<T>
 
     public bool Add(T item)
     {
-        if (m_Dictionary.ContainsKey(item)) return false;
+        if (m_Dictionary.ContainsKey(item)) 
+            return false;
+        if (sortKey == null)
+        {
+            m_Dictionary.Add(item, m_LinkedList.AddLast(item));
+            return true;
+        }
         var skItem = sortKey(item);
         for (LinkedListNode<T>? i = m_LinkedList.First; i != null; i = i.Next)
         {
