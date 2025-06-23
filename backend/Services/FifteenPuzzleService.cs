@@ -24,7 +24,7 @@ namespace AICourseTester.Services
                 aNode.State[i] = new int[dimensions];
                 Array.Fill(aNode.State[i], -1);
             }
-            var range = Enumerable.Range(1, dimensions * dimensions).ToList();
+            var range = Enumerable.Range(1, dimensions * dimensions - 1).ToList();
             int P0 = random.Next(1, dimensions * dimensions - 1);
             aNode.State[P0 / dimensions][P0 % dimensions] = -2;
             for (int i = 0; i < iters; i++)
