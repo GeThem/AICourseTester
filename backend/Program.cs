@@ -92,11 +92,11 @@ builder.Services.AddRateLimiter(options =>
         //partitionKey: httpContext.User.Identity?.Name ?? "anonymous",
         factory: _ => new TokenBucketRateLimiterOptions
         {
-            TokenLimit = 50,
+            TokenLimit = 150,
             QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
             QueueLimit = 0,
             ReplenishmentPeriod = TimeSpan.FromSeconds(60),
-            TokensPerPeriod = 20,
+            TokensPerPeriod = 50,
             AutoReplenishment = true
         })
     );
