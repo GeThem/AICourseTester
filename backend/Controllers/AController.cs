@@ -20,6 +20,7 @@ namespace AICourseTester.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly MainDbContext _context;
         private readonly UsersService _usersService;
+        private readonly Random _random = new Random();
 
         public AController(MainDbContext context, UserManager<ApplicationUser> userManager, UsersService usersService)
         {
@@ -38,7 +39,7 @@ namespace AICourseTester.Controllers
 
             //ANode aNode = new ANode(dimensions);
             //FifteenPuzzleService.ShuffleState(aNode);
-            var aNode = FifteenPuzzleService.GenerateState(iters, heuristic, dimensions);
+            var aNode = FifteenPuzzleService.GenerateState(_random.Next(1, 5), heuristic, dimensions);
             var (_, list) = FifteenPuzzleService.GenerateTree(aNode, iters);
             return list;
         }
@@ -82,7 +83,7 @@ namespace AICourseTester.Controllers
             }
             if (fp.Problem == null)
             {
-                var aNode = FifteenPuzzleService.GenerateState(fp.TreeHeight, (int)fp.Heuristic, fp.Dimensions);
+                var aNode = FifteenPuzzleService.GenerateState(_random.Next(1, 5), (int)fp.Heuristic, fp.Dimensions);
                 fp.Problem = aNode.State.ToJson();
                 _context.Fifteens.Update(fp);
                 await _context.SaveChangesAsync();

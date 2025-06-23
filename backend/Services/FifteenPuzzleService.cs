@@ -25,7 +25,7 @@ namespace AICourseTester.Services
                 Array.Fill(aNode.State[i], -1);
             }
             var range = Enumerable.Range(1, dimensions * dimensions - 1).ToList();
-            int P0 = random.Next(1, dimensions * dimensions - 1);
+            int P0 = random.Next(1, dimensions * dimensions);
             aNode.State[P0 / dimensions][P0 % dimensions] = -2;
             for (int i = 0; i < iters; i++)
             {
@@ -46,7 +46,7 @@ namespace AICourseTester.Services
                 {
                     directions.Add(((P0 + 1) % dimensions, P0 / dimensions));
                 }
-                if (i != iters - 2)
+                if (i != iters - 1)
                 {
                     directions.Remove((0, 0));
                 }
