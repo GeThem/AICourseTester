@@ -51,7 +51,7 @@ namespace AICourseTester.Controllers
                 return BadRequest();
             }
             var tree = FifteenPuzzleService.ListToTree(list);
-            var solution = FifteenPuzzleService.Search(tree, FifteenPuzzleService.Heuristics[heuristic]);
+            var solution = FifteenPuzzleService.Search(tree, FifteenPuzzleService.Heuristics[heuristic - 1]);
             return solution;
         }
 
