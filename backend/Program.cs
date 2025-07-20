@@ -183,11 +183,11 @@ using (var scope = app.Services.CreateScope())
 }
 
 var (http, https) = (Environment.GetEnvironmentVariable("LOCAL_URL_HTTP"), Environment.GetEnvironmentVariable("LOCAL_URL_HTTPS"));
-if (!http.IsNullOrEmpty()) 
+if (http != null) 
 { 
     app.Urls.Add(http);
 }
-if (!https.IsNullOrEmpty())
+if (https != null)
 {
     app.Urls.Add(https);
 }
