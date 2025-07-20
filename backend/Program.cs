@@ -23,10 +23,17 @@ builder.Services.AddCors(options =>
                           else
                           {
                               var front_url = Environment.GetEnvironmentVariable("FRONTEND_URL");
-                              policy
-                              //.SetIsOriginAllowed(origin => new Uri(origin).IsLoopback)
-                              .WithOrigins(front_url ?? "http://localhost:5533")
-                              .AllowAnyHeader().AllowAnyMethod();
+                              if (front_url == null)
+                              {
+                                  policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+                              }
+                              else
+                              {
+                                  policy
+                                  //.SetIsOriginAllowed(origin => new Uri(origin).IsLoopback)
+                                  .WithOrigins(front_url)
+                                  .AllowAnyHeader().AllowAnyMethod();
+                              }
                           }
                       });
 });
