@@ -18,24 +18,28 @@ namespace AICourseTester.Services
 
         public IQueryable<UserDTO> UserLeftJoinGroup(string? userId = null, bool getUserNames = false, bool getPfp = false)
         {
-            var start = userId == null ? _context.Users.Where(u => u.NormalizedUserName != "ADMIN")
-                : _context.Users.Where(u => u.Id == userId);
+            var start = userId != null ? _context.Users.Where(u => u.Id == userId) : _context.Users;
             var result = start
-                .GroupJoin(_context.UserGroups, u => u.Id, g => g.UserId, (u, g) => new { u, g })
-                .SelectMany(ug => ug.g.DefaultIfEmpty(), (u, g) => new { u.u.Id, u.u.UserName, u.u.Name, u.u.SecondName, u.u.Patronymic, g.GroupId, u.u.PfpPath })
+                .GroupJoin(_context.UserRoles, u => u.Id, ur => ur.UserId, (u, ur) => new { u, ur })
+                .SelectMany(uur => uur.ur.DefaultIfEmpty(), (u, r) => new { u.u, r })
+                .GroupJoin(_context.Roles, ur => ur.r.RoleId, r => r.Id, (ur, r) => new { ur.u, r })
+                .SelectMany(uur => uur.r.DefaultIfEmpty(), (u, r) => new { u.u, r })
+                .GroupJoin(_context.UserGroups, ur => ur.u.Id, g => g.UserId, (ur, g) => new { ur, g })
+                .SelectMany(urg => urg.g.DefaultIfEmpty(), (urg, g) => new { urg.ur.u.Id, urg.ur.u.UserName, urg.ur.u.Name, urg.ur.u.SecondName, urg.ur.u.Patronymic, g.GroupId, urg.ur.u.PfpPath, RoleName = urg.ur.r.Name })
                 .GroupJoin(_context.Groups, u => u.GroupId, g => g.Id, (u, g) => new { u, g })
-                .SelectMany(ug => ug.g.DefaultIfEmpty(), (u, g) => new UserDTO
+                .SelectMany(urg => urg.g.DefaultIfEmpty(), (ur, g) => new UserDTO
                 {
-                    Id = u.u.Id,
-                    UserName = getUserNames ? u.u.UserName : null,
-                    Name = u.u.Name,
-                    SecondName = u.u.SecondName,
-                    Patronymic = u.u.Patronymic,
-                    GroupId = u.u.GroupId,
+                    Id = ur.u.Id,
+                    UserName = getUserNames ? ur.u.UserName : null,
+                    Name = ur.u.Name,
+                    SecondName = ur.u.SecondName,
+                    Patronymic = ur.u.Patronymic,
+                    GroupId = ur.u.GroupId,
                     Group = g.Name,
-                    Pfp = getPfp ? Environment.GetEnvironmentVariable("LOCAL_URL").Split(";", StringSplitOptions.None)[0]
-                        + $"/{u.u.PfpPath ?? "Images/Default.webp"}"
-                        : null
+                    Pfp = getPfp ? (Environment.GetEnvironmentVariable("LOCAL_URL_HTTPS") ?? Environment.GetEnvironmentVariable("LOCAL_URL_HTTP")).Split(";", StringSplitOptions.None)[0]
+                        + $"/{ur.u.PfpPath ?? "Images/Default.webp"}"
+                        : null,
+                    IsAdmin = ur.u.RoleName == "Administrator" ? true : null
                 }).OrderBy(u => u.Group);
             return result;
         }
@@ -56,9 +60,9 @@ namespace AICourseTester.Services
         {
             if (user.PfpPath == null)
             {
-                return $"{Environment.GetEnvironmentVariable("LOCAL_URL").Split(";", StringSplitOptions.None)[0]}/Images/Default.webp";
+                return $"{(Environment.GetEnvironmentVariable("LOCAL_URL_HTTPS") ?? Environment.GetEnvironmentVariable("LOCAL_URL_HTTP")).Split(";", StringSplitOptions.None)[0]}/Images/Default.webp";
             }
-            return Environment.GetEnvironmentVariable("LOCAL_URL").Split(";", StringSplitOptions.None)[0] + $"/{user.PfpPath}";
+            return (Environment.GetEnvironmentVariable("LOCAL_URL_HTTPS") ?? Environment.GetEnvironmentVariable("LOCAL_URL_HTTP")).Split(";", StringSplitOptions.None)[0] + $"/{user.PfpPath}";
         }
     }
 }

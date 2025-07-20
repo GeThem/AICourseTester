@@ -3,6 +3,7 @@ using AICourseTester.Models;
 using AICourseTester.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using SixLabors.ImageSharp.Web.DependencyInjection;
 using System.Threading.RateLimiting;
 
@@ -24,7 +25,7 @@ builder.Services.AddCors(options =>
                               var front_url = Environment.GetEnvironmentVariable("FRONTEND_URL");
                               policy
                               //.SetIsOriginAllowed(origin => new Uri(origin).IsLoopback)
-                              .WithOrigins(front_url ?? "http://aistester.com", "http://localhost:5533")
+                              .WithOrigins(front_url ?? "http://localhost:5533")
                               .AllowAnyHeader().AllowAnyMethod();
                           }
                       });
@@ -166,27 +167,21 @@ using (var scope = app.Services.CreateScope())
         }
     }
     else
-    {
-        var role = await ctx.Roles.Where(r => r.Name == "Administrator").FirstAsync();
-        var prevAdmin = await ctx.UserRoles.FirstOrDefaultAsync(u => u.RoleId == role.Id);
-        if (prevAdmin != null)
-        {
-            await ctx.Users.Where(u => u.Id == prevAdmin.UserId).ExecuteDeleteAsync();
-            await ctx.SaveChangesAsync();
-        }
-        
+    {       
         user = new ApplicationUser();
         await userStore.SetUserNameAsync(user, userName, CancellationToken.None);
         await userManager.CreateAsync(user, password);
         await userManager.AddToRoleAsync(user, "Administrator");
     }
-    if (user.Name != "admin")
-    {
-        user.Name = "admin";
-        await ctx.SaveChangesAsync();
-    }
 }
 
-app.Urls.Add(Environment.GetEnvironmentVariable("LOCAL_URL_HTTP"));
-app.Urls.Add(Environment.GetEnvironmentVariable("LOCAL_URL_HTTPS"));
+var (http, https) = (Environment.GetEnvironmentVariable("LOCAL_URL_HTTP"), Environment.GetEnvironmentVariable("LOCAL_URL_HTTPS"));
+if (!http.IsNullOrEmpty()) 
+{ 
+    app.Urls.Add(http);
+}
+if (!https.IsNullOrEmpty())
+{
+    app.Urls.Add(https);
+}
 app.Run();

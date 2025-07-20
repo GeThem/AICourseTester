@@ -6,7 +6,6 @@
       "launchUrl": "swagger",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "LOCAL_URL": "http://localhost:5173",
         "LOCAL_URL_HTTP": "http://localhost:5173"
       },
       "dotnetRunMessages": true,
@@ -17,7 +16,6 @@
       "launchBrowser": false,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "LOCAL_URL": "https://localhost:7169;http://localhost:5173",
         "LOCAL_URL_HTTP": "http://localhost:5173",
         "LOCAL_URL_HTTPS": "https://localhost:7169"
       },
@@ -30,7 +28,6 @@
       "launchUrl": "swagger",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "LOCAL_URL": "https://localhost:7169;http://localhost:5173",
         "LOCAL_URL_HTTP": "http://localhost:5173",
         "LOCAL_URL_HTTPS": "https://localhost:7169"
       },
@@ -43,7 +40,6 @@
       "launchUrl": "swagger",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "LOCAL_URL": "https://localhost:7169;http://localhost:5173",
         "LOCAL_URL_HTTP": "http://localhost:5173",
         "LOCAL_URL_HTTPS": "https://localhost:7169"
       }

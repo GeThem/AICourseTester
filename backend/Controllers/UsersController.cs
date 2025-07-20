@@ -52,10 +52,6 @@ namespace AICourseTester.Controllers
             if (getSelf || !isAdmin)
             {
                 var user = await _usersService.UserLeftJoinGroup(reqUser.Id, true, true).ToArrayAsync();
-                if (isAdmin)
-                {
-                    user[0].IsAdmin = isAdmin;
-                }
                 return user;
             }
             var users = _usersService.UserLeftJoinGroup();
