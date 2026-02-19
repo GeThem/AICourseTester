@@ -1,0 +1,55 @@
+﻿name: AI
+services:
+  server:
+    env_file: ".env"
+    environment:
+      - ASPNETCORE_URLS=http://+:${HTTP_PORT},https://+:${HTTPS_PORT}
+      - ASPNETCORE_HTTP_PORTS=${HTTP_PORT}
+      - ASPNETCORE_HTTPS_PORTS=${HTTPS_PORT}
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=1234
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/cert.pfx
+    # environment:
+    #   - LOCAL_URL_HTTPS=${LOCAL_URL_HTTPS}
+    #   - LOCAL_URL_HTTP=${LOCAL_URL_HTTP}
+    #   - LOCAL_URL=${LOCAL_URL}
+    #   - FRONTEND_URL=${FRONTEND_URL}
+    #   - CONNECTION_STRING=${CONNECTION_STRING}
+    #   - ADMIN_USERNAME=${ADMIN_USERNAME}
+    #   - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    #   - HTTP_PORT=${HTTP_PORT}
+    #   - HTTPS_PORT=${HTTPS_PORT}
+    build:
+      context: .
+    #   args:
+    #     - HTTP_PORT=${HTTP_PORT}
+    #     - HTTPS_PORT=${HTTPS_PORT}
+    # ports:
+    #   - ${HTTP_PORT}:${HTTP_PORT}
+    #   - ${HTTPS_PORT}:${HTTPS_PORT}
+    ports:
+      - ${HTTP_PORT}:${HTTP_PORT}
+      - ${HTTPS_PORT}:${HTTPS_PORT}
+    volumes:
+      - ${APPDATA}/ASP.NET/Https:/https:ro
+    depends_on:
+      db:
+         condition: service_healthy
+  db:
+    image: postgres
+    restart: always
+    user: postgres
+    volumes:
+      - db-data:/var/lib/postgresql
+    environment:
+      - POSTGRES_USER=${DATABASE_USERNAME}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_DB=${DATABASE_NAME}
+    ports:
+      - "6432:5432"
+    healthcheck:
+     test: [ "CMD", "pg_isready" ]
+     interval: 10s
+     timeout: 5s
+     retries: 5
+volumes:
+  db-data:
