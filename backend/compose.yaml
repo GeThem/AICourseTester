@@ -8,24 +8,8 @@ services:
       - ASPNETCORE_HTTPS_PORTS=${HTTPS_PORT}
       - ASPNETCORE_Kestrel__Certificates__Default__Password=1234
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/cert.pfx
-    # environment:
-    #   - LOCAL_URL_HTTPS=${LOCAL_URL_HTTPS}
-    #   - LOCAL_URL_HTTP=${LOCAL_URL_HTTP}
-    #   - LOCAL_URL=${LOCAL_URL}
-    #   - FRONTEND_URL=${FRONTEND_URL}
-    #   - CONNECTION_STRING=${CONNECTION_STRING}
-    #   - ADMIN_USERNAME=${ADMIN_USERNAME}
-    #   - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-    #   - HTTP_PORT=${HTTP_PORT}
-    #   - HTTPS_PORT=${HTTPS_PORT}
     build:
       context: .
-    #   args:
-    #     - HTTP_PORT=${HTTP_PORT}
-    #     - HTTPS_PORT=${HTTPS_PORT}
-    # ports:
-    #   - ${HTTP_PORT}:${HTTP_PORT}
-    #   - ${HTTPS_PORT}:${HTTPS_PORT}
     ports:
       - ${HTTP_PORT}:${HTTP_PORT}
       - ${HTTPS_PORT}:${HTTPS_PORT}
