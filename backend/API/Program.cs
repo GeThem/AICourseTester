@@ -3,6 +3,7 @@ using AICourseTester.Models;
 using AICourseTester.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using SixLabors.ImageSharp.Web.DependencyInjection;
 using System.Threading.RateLimiting;
@@ -49,6 +50,8 @@ string connString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? b
 builder.Services.AddDbContext<MainDbContext>(options =>
 {
     options
+    // TODO: FIGURE OUT THE WARNING
+    .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning))
     .UseNpgsql(connString);
 });
 builder.Services.AddTransient<UsersService>();
@@ -139,6 +142,15 @@ app.UseRateLimiter();
 
 using (var scope = app.Services.CreateScope())
 {
+    if (app.Environment.IsDevelopment())
+    {
+        var context = scope.ServiceProvider.GetRequiredService<MainDbContext>();
+        if ((await context.Database.GetPendingMigrationsAsync()).Any())
+        {
+            await context.Database.MigrateAsync();
+        }
+    }
+
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     foreach (var role in new string[] { "Administrator" })
     {

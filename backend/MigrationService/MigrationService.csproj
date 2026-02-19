@@ -12,6 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\backend\AICourseTester.csproj" />
+    <ProjectReference Include="..\API\API.csproj" />
   </ItemGroup>
 </Project>

@@ -4,17 +4,15 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-noble AS base
 USER app
 WORKDIR /app
-EXPOSE 8000
-EXPOSE 8001
-
 
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:8.0-noble AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["API/API.csproj", "."]
+COPY ["API/API.csproj", "API/"]
 RUN dotnet restore "API/API.csproj"
 COPY . .
+
 WORKDIR "/src/API"
 RUN dotnet build "API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
