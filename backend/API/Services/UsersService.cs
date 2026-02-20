@@ -1,4 +1,5 @@
-﻿using AICourseTester.Data;
+﻿using AICourseTester.Controllers;
+using AICourseTester.Data;
 using AICourseTester.DTO;
 using AICourseTester.Models;
 using SixLabors.ImageSharp.PixelFormats;
@@ -18,6 +19,7 @@ namespace AICourseTester.Services
 
         public IQueryable<UserDTO> UserLeftJoinGroup(string? userId = null, bool getUserNames = false, bool getPfp = false)
         {
+            var url = Environment.GetEnvironmentVariable("PUBLIC_URL"); ;
             var start = userId != null ? _context.Users.Where(u => u.Id == userId) : _context.Users;
             var result = start
                 .GroupJoin(_context.UserRoles, u => u.Id, ur => ur.UserId, (u, ur) => new { u, ur })
@@ -36,9 +38,7 @@ namespace AICourseTester.Services
                     Patronymic = ur.u.Patronymic,
                     GroupId = ur.u.GroupId,
                     Group = g.Name,
-                    Pfp = getPfp ? (Environment.GetEnvironmentVariable("LOCAL_URL_HTTPS") ?? Environment.GetEnvironmentVariable("LOCAL_URL_HTTP")).Split(";", StringSplitOptions.None)[0]
-                        + $"/{ur.u.PfpPath ?? "Images/Default.webp"}"
-                        : null,
+                    Pfp = getPfp ? FullPfpPath(url, ur.u.PfpPath) : null,
                     IsAdmin = ur.u.RoleName == "Administrator" ? true : null
                 }).OrderBy(u => u.Group);
             return result;
@@ -56,13 +56,13 @@ namespace AICourseTester.Services
             return pfpPath;
         }
 
-        public string? LoadPfp(ApplicationUser user)
+        static public string FullPfpPath(string? url, string? pfpPath)
         {
-            if (user.PfpPath == null)
+            if (pfpPath == null)
             {
-                return $"{(Environment.GetEnvironmentVariable("LOCAL_URL_HTTPS") ?? Environment.GetEnvironmentVariable("LOCAL_URL_HTTP")).Split(";", StringSplitOptions.None)[0]}/Images/Default.webp";
+                return url + "/Images/Default.webp";
             }
-            return (Environment.GetEnvironmentVariable("LOCAL_URL_HTTPS") ?? Environment.GetEnvironmentVariable("LOCAL_URL_HTTP")).Split(";", StringSplitOptions.None)[0] + $"/{user.PfpPath}";
+            return url + "/" + pfpPath;
         }
     }
 }

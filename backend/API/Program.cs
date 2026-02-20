@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using SixLabors.ImageSharp.Web.DependencyInjection;
+using System.Resources;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -194,13 +195,24 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-var (http, https) = (Environment.GetEnvironmentVariable("LOCAL_URL_HTTP"), Environment.GetEnvironmentVariable("LOCAL_URL_HTTPS"));
-if (http != null) 
-{ 
-    app.Urls.Add(http);
-}
-if (https != null)
+var url = Environment.GetEnvironmentVariable("LISTEN_ON");
+var (http, https) = (Environment.GetEnvironmentVariable("HTTP_PORT"), Environment.GetEnvironmentVariable("HTTPS_PORT"));
+if (url != null)
 {
-    app.Urls.Add(https);
+    if (url.Contains("http:") || url.Contains("https:"))
+    {
+        app.Urls.Add(url);
+    }
+    else
+    {
+        if (http != null)
+        {
+            app.Urls.Add($"http://{url}:{http}");
+        }
+        if (https != null)
+        {
+            app.Urls.Add($"https://{url}:{https}");
+        }
+    }
 }
 app.Run();

@@ -1,20 +1,21 @@
 ﻿name: AI
 services:
   server:
-    env_file: ".env"
+    user: root
+    build:
+      context: ./backend
     environment:
-      - ASPNETCORE_URLS=http://+:${HTTP_PORT},https://+:${HTTPS_PORT}
       - ASPNETCORE_HTTP_PORTS=${HTTP_PORT}
       - ASPNETCORE_HTTPS_PORTS=${HTTPS_PORT}
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=1234
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${CERT_PW}
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/cert.pfx
-    build:
-      context: .
+    env_file: .env
     ports:
       - ${HTTP_PORT}:${HTTP_PORT}
       - ${HTTPS_PORT}:${HTTPS_PORT}
     volumes:
-      - ${APPDATA}/ASP.NET/Https:/https:ro
+      - ${CERT_PATH}:/https:ro
+      - images:/app/wwwroot/Images
     depends_on:
       db:
          condition: service_healthy
@@ -29,11 +30,13 @@ services:
       - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
       - POSTGRES_DB=${DATABASE_NAME}
     ports:
-      - "6432:5432"
+      - "6432:${DATABASE_PORT}"
     healthcheck:
      test: [ "CMD", "pg_isready" ]
      interval: 10s
      timeout: 5s
      retries: 5
+
 volumes:
   db-data:
+  images:

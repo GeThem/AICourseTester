@@ -51,8 +51,8 @@ namespace AICourseTester.Controllers
             var isAdmin = roles.FirstOrDefault(r => r == "Administrator") != null;
             if (getSelf || !isAdmin)
             {
-                var user = await _usersService.UserLeftJoinGroup(reqUser.Id, true, true).ToArrayAsync();
-                return user;
+                var user = _usersService.UserLeftJoinGroup(reqUser.Id, true, true);
+                return await user.ToArrayAsync();
             }
             var users = _usersService.UserLeftJoinGroup();
             if (users.IsNullOrEmpty())
@@ -65,7 +65,7 @@ namespace AICourseTester.Controllers
         [Authorize(Roles = "Administrator"), HttpGet("{userId}")]
         public async Task<ActionResult<UserDTO?>> GetUser(string userId)
         {
-            var user = await _usersService.UserLeftJoinGroup(getPfp: true, getUserNames: true).FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _usersService.UserLeftJoinGroup(userId, getPfp: true, getUserNames: true).FirstOrDefaultAsync();
             if (user == null)
             {
                 return NotFound();

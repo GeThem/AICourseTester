@@ -10,12 +10,13 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FA19C3F3-9319-404C-A2C9-4964C0344558}"
 	ProjectSection(SolutionItems) = preProject
 		.dockerignore = .dockerignore
-		.env = .env
-		.env.example = .env.example
+		..\.env = ..\.env
+		..\.env.example = ..\.env.example
 		..\.gitignore = ..\.gitignore
-		compose.yaml = compose.yaml
+		..\compose.yaml = ..\compose.yaml
 		Dockerfile = Dockerfile
 		Dockerfile.original = Dockerfile.original
+		..\nginx\nginx.conf = ..\nginx\nginx.conf
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MigrationService", "MigrationService\MigrationService.csproj", "{A82D42A6-0546-4812-B419-DE0FE67E227D}"
